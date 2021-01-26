@@ -1,0 +1,29 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "public/pages",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "login",
+        "destination": "/login.html"
+      },
+      {
+        "source": "registration",
+        "destination": "/registration.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+      
+    ]
+  }
+}
