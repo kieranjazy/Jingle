@@ -23,7 +23,6 @@ window.onload = function() {
 
     navigator.keyboard.lock(toneKeys);
     document.querySelector(".stop").addEventListener('click', function() {
-        console.log("hi");
         osc.stop();
     });
 
