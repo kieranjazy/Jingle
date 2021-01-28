@@ -58,6 +58,10 @@ Composer.prototype.getBps() {
 	return this.bpm * 0.16666666;
 }
 
+Composer.prototype.setBpm(newval) {
+	this.bpm = newval;
+}
+
 Composer.prototype.fetchInstrument(instrument) {
 	/*
 	 *	Basically This is being done because wavetables are big and
