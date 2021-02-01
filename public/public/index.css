@@ -1,0 +1,27 @@
+.main-section {
+    margin-top: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    ;
+}
+
+.image-section, .login-signup form {
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 0px 50px;
+}
+
+.registerButton:hover, .loginButton:hover {
+    color: blue;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+
+
+
+
