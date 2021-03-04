@@ -101,7 +101,7 @@ function test3() {
 	/* Demonstration will use lavender town from pokemon */
 	let bps = 60/120;
 	let length = 48;
-	let channels = 1;
+	let channels = 2;
 	/* Create Zeroed Array to store table positions for *Every* note (This is to reduce the need for other operations :) ) */
 	let phases = Array.apply(null, Array(128)).map(function(x, i){return 0});
 	let phases2 = Array.apply(null, Array(128)).map(function(x, i){return 0});
