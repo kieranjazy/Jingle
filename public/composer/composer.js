@@ -200,7 +200,7 @@ Composer.prototype.__play = function() {
 			for (let j = 0; j < this.activeNotes.length; j++) {
 				if(this.loadedInstruments[j]["type"] == "wavetable") {
 					for(let k = 0; k < this.activeNotes[j].length; k++) {
-						this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][activeNotes[j][k]] + (this.keyfreqs[activeNotes[j][k]] * (totalNotes + offset))) % this.instrumentBank[j].length;
+						this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][activeNotes[j][k]] + (this.keyfreqs[activeNotes[j][k]] * totalNotes)) % this.instrumentBank[j].length;
 						let lower = Math.floor(this.keyPositions[j][this.activeNotes[j][k]]);
 						let upper = Math.floor(this.keyPositions[j][this.activeNotes[j][k]] + 0.5) % this.instrumentBank[j].length;
 						let val = Math.min(Math.max(this.instrumentVolumes[j] * this.masterVolume * (this.insrumentBank[j][lower] + ((this.instrumentBank[upper] - this.instrumentBank[lower]) * (this.keyPositions[j][activeNotes[j][k]]%1))),-1),1);
@@ -223,7 +223,7 @@ Composer.prototype.__play = function() {
 			for (let j = 0; j < this.activeNotes.length; j++) {
 				if(this.loadedInstruments[j]["type"] == "wavetable") {
 					for(let k = 0; k < this.activeNotes[j].length; k++) {
-						this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][activeNotes[j][k]] + (this.keyfreqs[activeNotes[j][k]] * (totalNotes + offset))) % this.instrumentBank[j].length;
+						this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][activeNotes[j][k]] + (this.keyfreqs[activeNotes[j][k]] * totalNotes) % this.instrumentBank[j].length;
 						let lower = Math.floor(this.keyPositions[j][this.activeNotes[j][k]]);
 						let upper = Math.floor(this.keyPositions[j][this.activeNotes[j][k]] + 0.5) % this.instrumentBank[j].length;
 						/*	This is disgusting I hate it so much */
