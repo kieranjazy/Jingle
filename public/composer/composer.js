@@ -138,6 +138,11 @@ Composer.prototype.getNumberOfChannels = function() {
 
 Composer.prototype.__play = function() {
 	// TODO: DrumKits
+	if(!this.isPlaying) {
+		//Pause
+		return;
+	}
+
 	if(this.sequencePosition == this.sequenceLength) {
 		this.stop();
 		return;
