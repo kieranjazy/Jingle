@@ -70,3 +70,4 @@ node_modules/
 /public/composer/wavetables/*
 #not including proprietary samples
 /public/composer/tests/dsamples/*
+*.wav
