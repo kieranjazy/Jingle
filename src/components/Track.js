@@ -1,5 +1,5 @@
-import React, { createContext, useEffect } from 'react'
-import { makeStyles, withStyles } from '@material-ui/core/styles'
+import React, { createContext, useEffect, useRef } from 'react'
+import { makeStyles, withStyles, createStyles } from '@material-ui/core/styles'
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -59,7 +59,8 @@ const useStyles = theme => ({
         overflow: 'hidden',
     },
     toggles: {
-
+        display: 'flex',
+        flexDirection: 'row',
     },
     sliders: {
         display: 'flex',
@@ -72,14 +73,13 @@ const useStyles = theme => ({
     redBar: {
         top: 0,
         left: 0,
-        marginLeft: 0,
         height: 140,
         width: 7,
         backgroundColor: 'red',
     },
     redBarAnimation: {
         animation: "$moveLine 10000ms linear",
-    }
+    },
 });
 
 class Track extends React.Component {
@@ -88,13 +88,14 @@ class Track extends React.Component {
         this.state = {
             pan: 0.5,
             volume: 100,
-            solo: false,
-            mute: false,
-            timelineAnimation: false,
+            timelineAnimation: 'stop',
+            trackLength: 8000,
         };
 
         this.volumeChange = this.volumeChange.bind(this);
         this.panChange = this.panChange.bind(this);
+
+        this.redBarRef = React.createRef();
     }
 
     volumeChange = (event, newValue) => {
@@ -109,22 +110,48 @@ class Track extends React.Component {
         })
     }
 
-    timelineAnimationChange = (newValue) => {
+    trackLengthChange = (newValue) => {
         this.setState({
-            timelineAnimation: newValue
+            trackLength: newValue
+        });
+    }
+
+    UNSAFE_componentWillReceiveProps(nextProps) {
+        if (nextProps.playTimelineState != this.props.playTimelineState) {
+            if (nextProps.playTimelineState === 'pause') {
+                this.redBarRef.current.style.animationPlayState = 'paused';
+            } else if (nextProps.playTimelineState === 'play' || nextProps.playTimelineState === 'record') {
+                this.redBarRef.current.style.animationDuration = nextProps.getTrackLength() + 'ms';
+                this.redBarRef.current.style.animationPlayState = 'inherit';
+            }
+        }
+        this.setState({
+            timelineAnimation: nextProps.playTimelineState,
+        });
+    }
+
+    componentWillUnmount() {
+        this.setState({
+            timelineAnimation: 'stop',
         })
     }
 
 
     render() {
-        const { classes } = this.props;
+        const { classes, setPlayTimelineState, toggleMuteArray, getTrackLength } = this.props;
+
+        //this.state.trackLength = getTrackLength();
 
         return (
             <div className={classes.root}>
                 <div className={classes.trackVisual}>
-                    <div className={classes.canvas}>
-                        <div className={clsx(classes.redBar, { [classes.redBarAnimation]: this.state.timelineAnimation })} onAnimationEnd={() => this.state.timelineAnimation = 0}>
-
+                    <div className={classes.canvas} >
+                        <div className={clsx(classes.redBar,
+                            {
+                                [classes.redBarAnimation]: this.state.timelineAnimation === 'play' || this.state.timelineAnimation === 'pause' || this.state.timelineAnimation === 'record',
+                            }
+                        )}
+                            onAnimationEnd={() => setPlayTimelineState('stop')} ref={this.redBarRef}>
                         </div>
                     </div>
                 </div>
@@ -132,11 +159,11 @@ class Track extends React.Component {
                 <div className={classes.options}>
                     <div className={classes.toggles}>
                         <FormGroup row>
-                            <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" />
-                            <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" />
+                            <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" onChange={(e) => { toggleMuteArray(); }} />
+                            <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false} />
                         </FormGroup>
 
-                        <Button onClick={() => this.state.timelineAnimation = 1}>Test</Button>
+                        <Button>Select</Button>
                     </div>
 
                     <div className={classes.sliders}>
@@ -153,5 +180,106 @@ class Track extends React.Component {
         );
     }
 }
+
+/*
+class Track extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            pan: 0.5,
+            volume: 100,
+            solo: false,
+            mute: false,
+            timelineAnimation: 'stop',
+        };
+
+        this.volumeChange = this.volumeChange.bind(this);
+        this.panChange = this.panChange.bind(this);
+
+        this.redBarRef = React.createRef();
+    }
+
+    volumeChange = (event, newValue) => {
+        this.setState({
+            volume: newValue
+        });
+    }
+
+    panChange = (event, newValue) => {
+        this.setState({
+            pan: newValue
+        })
+    }
+
+    muteChange = (event) => {
+        this.toggleMuteArray();
+    }
+
+    soloChange = (event) => {
+        //this.toggleSoloArray();
+    }
+
+    timelineAnimationChange = (newValue) => {
+        if (newValue === 'pause') {
+            this.redBarRef.current.style.animationPlayState = 'paused';
+        } else if (newValue === 'play') {
+            this.redBarRef.current.style.animationPlayState = 'inherit';
+        }
+
+        this.setState({
+            timelineAnimation: newValue,
+        })
+    }
+
+    componentWillUnmount() {
+        this.setState({
+            timelineAnimation: 'stop',
+        })
+    }
+
+
+    render() {
+        const { classes, setPlayTimeline, toggleMuteArray } = this.props;
+
+        return (
+            <div className={classes.root}>
+                <div className={classes.trackVisual}>
+                    <div className={classes.canvas}>
+                        <div className={clsx(classes.redBar,
+                            {
+                                [classes.redBarAnimation]: this.state.timelineAnimation === 'play' || this.state.timelineAnimation === 'pause',
+                            }//How about if paused, set marginLeft to current animation marginLeft value
+                        )}
+                        onAnimationEnd={() => setPlayTimeline('stop')} ref={this.redBarRef}>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div className={classes.options}>
+                    <div className={classes.toggles}>
+                        <FormGroup row>
+                            <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" checked={false} onChange={toggleMuteArray}/>
+                            <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false}/>
+                        </FormGroup>
+
+                        <Button>Select</Button>
+                    </div>
+
+                    <div className={classes.sliders}>
+                        <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200}>
+
+                        </Slider>
+
+                        <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05}>
+
+                        </Slider>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+*/
 
 export default withStyles(useStyles, { withTheme: true })(Track);
