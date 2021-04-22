@@ -38,17 +38,26 @@ const useStyles = theme => ({
     },
 });
 
+const keyBindings = [
+    "KeyZ","KeyX",
+    "KeySpace"
+];
+
+const toneKeys = [
+    "KeyA","KeyW","KeyS","KeyE","KeyD","KeyF","KeyT","KeyG","KeyY","KeyH","KeyU","KeyJ","KeyK","KeyO","KeyL","KeyP"
+];
+
 class TrackManager extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             masterVolume: 1,
             bpm: 120,
-            isRecording: false,
             muteArray: [0, 0, 0, 0],
             soloArray: [0, 0, 0, 0],
             playTimelineState: 'stop',
             composer: new Composer(),
+            octave: 4,
         };
 
         this.state.composer.setMasterVolume(this.state.masterVolume);
@@ -63,25 +72,20 @@ class TrackManager extends React.Component {
 
     setPlayTimelineState = (newState) => {
         if (newState === 'record') {
-            setTimeout(() => this.setState({playTimelineState: newState}), 240000 / this.state.bpm); //magic number dont ask dont tell
+            this.state.composer.record(0);
+            setTimeout(() => {this.setState({playTimelineState: newState})}, 240000 / this.state.bpm); //magic number dont ask dont tell
         } else {
             this.setState({playTimelineState: newState});
-        }
-        
-    }
 
-    setIsRecording = (newState) => {
-        this.setState({isRecording: newState});
-
-        if (this.state.muteArray[0] != 1) {
-            if (newState) {
-                this.state.composer.record();
-            } else {
+            if (newState == 'play') {
+                this.state.composer.play();
+            } else if (newState == 'pause') {
+                this.state.composer.pause();
+            } else if (newState == 'stop') {
                 this.state.composer.stop();
             }
         }
-
-
+        
     }
 
     setMasterVolume = (e, newState) => {
@@ -114,6 +118,31 @@ class TrackManager extends React.Component {
 
     }
 
+    keyDownCallback = (event) => {
+        if (toneKeys.includes(event.code) && this.state.playTimelineState == 'record') {
+            let index = toneKeys.indexOf(event.code);
+            let note = ((this.state.octave + 1) * 12) + index;
+
+            if (this.state.composer.activeNotes.indexOf(note) === -1) {
+                this.state.composer.activeNotes.push(note);
+                console.log(this.state.composer.activeNotes);
+            }
+        }
+    }
+
+    keyUpCallback = (event) => {
+        if (toneKeys.includes(event.code) && this.state.playTimelineState == 'record') {
+            let index = toneKeys.indexOf(event.code);
+            let note = ((this.state.octave + 1) * 12) + index;
+            let nIndex = this.state.composer.activeNotes.indexOf(note);
+
+            if (nIndex != -1) {
+                this.state.composer.activeNotes.splice(nIndex, 1);
+                console.log(this.state.composer.activeNotes);
+            }
+        }
+    }
+
 
     componentWillUnmount() {
 
@@ -124,15 +153,15 @@ class TrackManager extends React.Component {
         const { classes } = this.props;
 
         return (
-            <div className={classes.root}>
+            <div className={classes.root} onKeyDown={this.keyDownCallback} onKeyUp={this.keyUpCallback}>
                 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"></link>
 
                 <div className={classes.controlsDiv}>
                     <ButtonGroup variant='contained' color='primary'>
                         <Button onClick={() => this.setPlayTimelineState('play')}>Play</Button>
-                        <Button onClick={() => { this.setPlayTimelineState('pause'); this.setIsRecording(false); }}>Pause</Button>
-                        <Button onClick={() => { this.setPlayTimelineState('stop'); this.setIsRecording(false); }}>Stop</Button>
-                        <Button onClick={() => { this.setPlayTimelineState('record'); this.setIsRecording(true); }}>Record</Button>
+                        <Button onClick={() => this.setPlayTimelineState('pause')}>Pause</Button>
+                        <Button onClick={() => this.setPlayTimelineState('stop')}>Stop</Button>
+                        <Button onClick={() => this.setPlayTimelineState('record')}>Record</Button>
                         <Button disabled="true">Composer Test</Button>
                     </ButtonGroup>
 

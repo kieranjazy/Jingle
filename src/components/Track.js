@@ -164,6 +164,7 @@ class Track extends React.Component {
                         </FormGroup>
 
                         <Button>Select</Button>
+                        <Button>Clear</Button>
                     </div>
 
                     <div className={classes.sliders}>
