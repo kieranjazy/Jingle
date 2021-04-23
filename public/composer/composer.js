@@ -429,7 +429,6 @@ Composer.prototype.__record = async function(trackNum) {
 		// TODO: Play single track audio
 		await sleep(Math.floor(this.bps*0.03125*1000));
 		if(this.isPlaying == false) {
-			this.sequencer.setLength(i+1);
 			break;
 		}
 	}
