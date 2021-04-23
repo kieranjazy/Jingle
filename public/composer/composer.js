@@ -395,6 +395,7 @@ Composer.prototype.seek = function(position) {
 //Internal Recording process
 Composer.prototype.__record = async function(trackNum) {
 	console.log("Recording");
+	this.isPlaying = true;
 	let prevNotes = [];
 	//Total Track Length is how many notes you can fit in 30s
 	let totalTrackLength = (30/this.bps) * 32;
