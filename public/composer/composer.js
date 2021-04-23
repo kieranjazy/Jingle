@@ -1,5 +1,5 @@
 const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioctx = new AudioContext();
+let audioctx = new AudioContext();
 /*
  * Composer
  * Version 2.1 (work in progress though!)
@@ -34,7 +34,7 @@ function Composer() {
 									7.55087,7.99986,8.47556,8.97954,9.5135,10.0792,10.67854,11.31352,11.98625,12.69899,13.45411,14.25414,
 									15.10173,15.99973,16.95112,17.95909,19.02699,20.1584,21.35708,22.62703,23.97251,25.39799,26.90823,
 									28.50828,30.20347,31.99946,33.90224,35.91818,38.05398,40.31679,42.71415,45.25407,47.94501];
-	this.instrumentBank = [];
+	this.instrumentBank = [wavetable];
 	this.bps = 1;
 	//Mono by Default for speed
 	this.channels = 1;
@@ -179,7 +179,6 @@ Composer.prototype.__play = function() {
 			for(let i = 0; i < this.activeNotes.length; i++) {
 				totalNotes += this.activeNotes[i].length;
 			}
-			console.log(this.activeNotes);
 			//Step 2: Buffer Loading
 			if (totalNotes > 0) {
 				let ended_instruments = 0;
@@ -209,7 +208,7 @@ Composer.prototype.__play = function() {
 								   6. Performs a MaxMin operation to avoid clipping
 								   7. loads this newly calculated value to the correct buffer position
 								*/
-								nowBuffering[framePosition + i + offset] = this.instrumentVolumes[j] * this.masterVolume * (this.instrumentBank[j][lower] + ((this.instrumentBank[j][upper] - this.instrumentBank[j][lower]) * (this.keyPositions[j][this.activeNotes[j][k]]%1)));
+								nowBuffering[framePosition + i + offset] = Math.min(Math.max(this.instrumentVolumes[j] * this.masterVolume * (this.instrumentBank[j][lower] + ((this.instrumentBank[j][upper] - this.instrumentBank[j][lower]) * (this.keyPositions[j][this.activeNotes[j][k]]%1))),-1),1);
 								//By Adding this to the end we can make every sample act as if it's the only sample being played regardless of it's position
 								this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][this.activeNotes[j][k]] + (this.keyfreqs[this.activeNotes[j][k]] * (totalNotes - offset))) % this.instrumentBank[j].length;
 								offset++;
@@ -298,6 +297,7 @@ Composer.prototype.__play = function() {
 					}
 					ended_instruments = 0;
 					for(let j = 0; j < this.activeNotes.length; j++) {
+						console.log(j);
 						if(this.loadedInstruments[j]["type"] == "wavetable") {
 							for(let k = 0; k < this.activeNotes[j].length; k++) {
 								this.keyPositions[j][this.activeNotes[j][k]] = (this.keyPositions[j][this.activeNotes[j][k]] + (this.keyfreqs[this.activeNotes[j][k]] * offset)) % this.instrumentBank[j].length;
@@ -377,9 +377,12 @@ Composer.prototype.pause = function() {
 Composer.prototype.stop = function() {
 	if(audioctx.state=="running"||audioctx.state=="suspended") {
 		console.log("Stopped");
-		audioctx.close();
+		audioctx.close().then(()=>{
+			console.log("AudioContext Closed");
+		});
+		audioctx = new AudioContext();
 	}
-	this.activeNotes=[[],[],[],[]];
+	this.activeNotes=[[]];
 	this.sequencePosition=0;
 	this.isPlaying = false;
 }
@@ -400,6 +403,7 @@ Composer.prototype.__record = async function(trackNum) {
 	//Total Track Length is how many notes you can fit in 30s
 	let totalTrackLength = (30/this.bps) * 32;
 	this.sequenceLength = totalTrackLength;
+	this.sequencer.setLength(totalTrackLength);
 	console.log("Track Length " + totalTrackLength + " Steps");
 	for(let i = 0; i < totalTrackLength; i++) {
 		//toneKeys is in a different file at the moment
@@ -424,7 +428,8 @@ Composer.prototype.__record = async function(trackNum) {
 		//Sleeps for now, going to have it do something else soon ;)
 		// TODO: Play single track audio
 		await sleep(Math.floor(this.bps*0.03125*1000));
-		if(!this.isPlaying) {
+		if(this.isPlaying == false) {
+			this.sequencer.setLength(i+1);
 			break;
 		}
 	}
@@ -504,4 +509,4 @@ Composer.prototype.renderMp3 = function() {
 
 Composer.prototype.loadTestData = function() {
 	this.sequencer.loadDummyData();
-}
+};
