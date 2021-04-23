@@ -61,7 +61,8 @@ Sequence.prototype.getData = function(timeSteps) {
 		return [];
 	} else {
 		console.log("Sequence Position :" + timeSteps + " " + this.sequenceData[timeSteps]);
-		return this.sequenceData[timeSteps];
+		//Stops accidental overwrites 
+		return this.sequenceData[timeSteps].slice();
 	}
 };
 
