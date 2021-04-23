@@ -68,3 +68,19 @@ function modifyBPM() {
 function dumpRecording() {
 	composer.saveData();
 }
+
+function play() {
+	composer.play();
+}
+
+function stop() {
+	composer.stop();
+}
+
+function pause() {
+	composer.pause();
+}
+
+function demo() {
+	composer.loadTestData();
+}
