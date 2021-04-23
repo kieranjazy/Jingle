@@ -7,6 +7,16 @@ import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import Slider from '@material-ui/core/Slider'
 import Button from '@material-ui/core/Button'
 import clsx from 'clsx';
+import VisualNote from './VisualNote'
+import VolumeDown from '@material-ui/icons/VolumeDown';
+import VolumeUp from '@material-ui/icons/VolumeUp';
+import Grid from '@material-ui/core/Grid'
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+
+const toneKeys = [
+    "KeyA","KeyW","KeyS","KeyE","KeyD","KeyF","KeyT","KeyG","KeyY","KeyH","KeyU","KeyJ","KeyK","KeyO","KeyL","KeyP"
+];
 
 const useStyles = theme => ({
     root: {
@@ -90,12 +100,16 @@ class Track extends React.Component {
             volume: 100,
             timelineAnimation: 'stop',
             trackLength: 8000,
+            timeStart: null,
+            visualNotes: [], //onkeypress add visual note to each track's arrau
         };
 
         this.volumeChange = this.volumeChange.bind(this);
         this.panChange = this.panChange.bind(this);
 
         this.redBarRef = React.createRef();
+        this.noteRef = React.createRef();
+        this.currentVisualNoteRef = React.createRef();
     }
 
     volumeChange = (event, newValue) => {
@@ -116,18 +130,38 @@ class Track extends React.Component {
         });
     }
 
+    addVisualNote = (xValue, yValue) => {
+        this.setState({
+            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRef}/>]
+        })
+    }
+
     UNSAFE_componentWillReceiveProps(nextProps) {
         if (nextProps.playTimelineState != this.props.playTimelineState) {
             if (nextProps.playTimelineState === 'pause') {
                 this.redBarRef.current.style.animationPlayState = 'paused';
             } else if (nextProps.playTimelineState === 'play' || nextProps.playTimelineState === 'record') {
                 this.redBarRef.current.style.animationDuration = nextProps.getTrackLength() + 'ms';
+                this.trackLengthChange(nextProps.getTrackLength());
                 this.redBarRef.current.style.animationPlayState = 'inherit';
+
+                if (nextProps.playTimelineState === 'record') {
+                    this.setState({timeStart: performance.now()});
+                }
+            }
+
+            this.setState({
+                timelineAnimation: nextProps.playTimelineState,
+            });
+        }
+
+        if (nextProps.keyPressState != this.props.keyPressState) {
+            if (nextProps.keyPressState === 'down') {
+                this.addVisualNote(((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050, toneKeys.indexOf(nextProps.keyPressValue) * (140 / toneKeys.length));
+            } else if (nextProps.keyPressState === 'up') {
+                this.currentVisualNoteRef.current.toggleIsExpanding();
             }
         }
-        this.setState({
-            timelineAnimation: nextProps.playTimelineState,
-        });
     }
 
     componentWillUnmount() {
@@ -151,8 +185,10 @@ class Track extends React.Component {
                                 [classes.redBarAnimation]: this.state.timelineAnimation === 'play' || this.state.timelineAnimation === 'pause' || this.state.timelineAnimation === 'record',
                             }
                         )}
-                            onAnimationEnd={() => setPlayTimelineState('stop')} ref={this.redBarRef}>
+                            onAnimationEnd={() => setPlayTimelineState('stop')} ref={this.redBarRef}
+                        >
                         </div>
+                        {this.state.visualNotes}
                     </div>
                 </div>
 
@@ -163,18 +199,49 @@ class Track extends React.Component {
                             <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false} />
                         </FormGroup>
 
-                        <Button>Select</Button>
-                        <Button>Clear</Button>
+                        <FormGroup column>
+                            <Button>Select</Button>
+                            <Button>Clear</Button>
+                        </FormGroup>
                     </div>
 
                     <div className={classes.sliders}>
-                        <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200}>
+                        <Grid container spacing={1}>
+                            <Grid item xs={2}>
+                                <VolumeDown fontSize={'small'}/>
+                            </Grid>
 
-                        </Slider>
+                            <Grid item xs={8}>
+                                <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200} style={{width: 85}}>
 
-                        <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05}>
+                                </Slider>
+                            </Grid>
 
-                        </Slider>
+                            <Grid item xs={2}>
+                                <VolumeUp fontSize={'small'}/>
+                            </Grid>
+                        </Grid>
+
+                        <Grid container spacing={1} style={{position: 'relative', top: '-5px'}}>
+                            <Grid item xs={2}>
+                                <ChevronLeftIcon fontSize={'small'}/>
+                            </Grid>
+
+                            <Grid item xs={8}>
+                                <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05} style={{width: 85}}>
+
+                                </Slider>
+                            </Grid>
+
+                            <Grid item xs={2}>
+                                <ChevronRightIcon fontSize={'small'}/>
+                            </Grid>
+
+                        </Grid>
+
+
+
+                        
                     </div>
                 </div>
             </div>

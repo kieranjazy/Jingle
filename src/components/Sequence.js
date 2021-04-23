@@ -60,7 +60,8 @@ Sequence.prototype.getData = function(timeSteps) {
 	if(typeof(this.sequenceData[timeSteps]) == "undefined") {
 		return [];
 	} else {
-		return this.sequenceData[timeSteps];
+		console.log("Sequence Position : " + timeSteps + " " + this.sequenceData[timeSteps]);
+		return this.sequenceData[timeSteps].slice();
 	}
 };
 
