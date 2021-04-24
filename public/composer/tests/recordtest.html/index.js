@@ -2,7 +2,6 @@
 const composer = new Composer();
 const toneKeys = ["KeyA","KeyW","KeyS","KeyE","KeyD","KeyF", "KeyT", "KeyG", "KeyY", "KeyH", "KeyU","KeyJ", "KeyZ","KeyX"];
 let octave = 4;
-let activeNotes = [];
 window.onload = function() {
 	navigator.keyboard.lock(toneKeys);
 }
@@ -14,22 +13,22 @@ window.onkeydown = function(event) {
 			case 12:
 				if(octave>0) {
 					console.log("Octave Down");
-					activeNotes = [];
+					composer.keyboardState = [];
 					octave--;
 				}
 				break;
 			case 13:
 				if(octave<9) {
 					console.log("Octave Up");
-					activeNotes = [];
+					composer.keyboardState = [];
 					octave++;
 				}
 				break;
 			default:
 				let note = ((octave + 1) * 12) + index;
-				if(activeNotes.indexOf(note)==-1) {
-					activeNotes.push(note);
-					console.log(activeNotes);
+				if(composer.keyboardState.indexOf(note)==-1) {
+					composer.keyboardState.push(note);
+					console.log(composer.keyboardState);
 				}
 				break;
 		}
@@ -45,10 +44,10 @@ window.onkeyup = function(event) {
 				break;
 			default:
 				let note = ((octave + 1) * 12) + index;
-				let nindex = activeNotes.indexOf(note);
+				let nindex = composer.keyboardState.indexOf(note);
 				if(nindex!=-1) {
-					activeNotes.splice(nindex,1);
-					console.log(activeNotes);
+					composer.keyboardState.splice(nindex,1);
+					console.log(composer.keyboardState);
 				}
 				break;
 		}
