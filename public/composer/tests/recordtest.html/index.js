@@ -84,3 +84,8 @@ function pause() {
 function demo() {
 	composer.loadTestData();
 }
+
+function clear() {
+	console.log("Clear!");
+	composer.clearTrack(0);
+}

@@ -4,7 +4,7 @@ let audioctx = new AudioContext();
  * Composer
  * Version 2.1 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 23/04/2021
+ * Last Edited 24/04/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -34,7 +34,7 @@ function Composer() {
 									7.55087,7.99986,8.47556,8.97954,9.5135,10.0792,10.67854,11.31352,11.98625,12.69899,13.45411,14.25414,
 									15.10173,15.99973,16.95112,17.95909,19.02699,20.1584,21.35708,22.62703,23.97251,25.39799,26.90823,
 									28.50828,30.20347,31.99946,33.90224,35.91818,38.05398,40.31679,42.71415,45.25407,47.94501];
-	this.instrumentBank = [wavetable];
+	this.instrumentBank = [wavetable_wobbly];
 	this.bps = 1;
 	//Mono by Default for speed
 	this.channels = 1;
@@ -141,6 +141,10 @@ Composer.prototype.__play = function() {
 	let totalFrames = this.sequenceLength - this.sequencePosition;
 	let totalBufferSize = frameSize * totalFrames;
 	console.log("Frame Size: "+frameSize+" Number of Frames: "+totalFrames+" Total Buffer Size: "+totalBufferSize);
+	if(totalFrames == 0) {
+		console.log("Nothing Passed!, nothing to play.");
+		return;
+	}
 	let myArrayBuffer = audioctx.createBuffer(this.channels,totalBufferSize,audioctx.sampleRate);
 	if(this.channels == 1) {
 		//Mono
@@ -150,6 +154,9 @@ Composer.prototype.__play = function() {
 			//Step 1: Step Loading
 			let tempNotes = this.sequencer.getData(step);
 			for(let i = 0; i < tempNotes.length; i++) {
+				if(tempNotes[i][1]=='') {
+					continue;
+				}
 				/*
 					Each item in the tempNotes array follows the following scheme
 					[instrument_number, note, flag]
@@ -374,10 +381,10 @@ Composer.prototype.pause = function() {
 	}
 }
 
-Composer.prototype.stop = function() {
+Composer.prototype.stop = async function() {
 	if(audioctx.state=="running"||audioctx.state=="suspended") {
 		console.log("Stopped");
-		audioctx.close().then(()=>{
+		await audioctx.close().then(()=>{
 			console.log("AudioContext Closed");
 		});
 		audioctx = new AudioContext();
@@ -429,6 +436,7 @@ Composer.prototype.__record = async function(trackNum) {
 		// TODO: Play single track audio
 		await sleep(Math.floor(this.bps*0.03125*1000));
 		if(this.isPlaying == false) {
+			this.sequencer.setLength(i+1);
 			break;
 		}
 	}
