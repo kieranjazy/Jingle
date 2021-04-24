@@ -487,6 +487,25 @@ Composer.prototype.record = function(trackNum) {
 	source.onended = () => {this.__record(trackNum)};
 };
 
+Composer.prototype.playMetronome = async function() {
+	let duration = Math.floor(this.bps*audioctx.sampleRate);
+	let myArrayBuffer = audioctx.createBuffer(0,duration,audioctx.sampleRate);
+	let nowBuffering = myArrayBuffer.getChannelData(0);
+	for(let i = 0; i < duration; i++) {
+		if(i < metronome.length) {
+			nowBuffering[i] = metronome[i];
+		} else {
+			while(i < duration) {
+				nowBuffering[i] = 0;
+			}
+		}
+	}
+	let source = audioctx.createBufferSource();
+	source.buffer = myArrayBuffer;
+	source.connect(audioctx.destination);
+	source.onended = () => {this.playMetronome()};
+}
+
 Composer.prototype.fetchInstrument = function(instrument) {
 	for(let i = 0; i < this.loadedInstruments.length; i++) {
 		if(this.loadedInstruments[i].isLoaded == false) {
