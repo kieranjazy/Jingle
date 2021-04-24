@@ -70,6 +70,13 @@ function dumpRecording() {
 }
 
 function play() {
+	let arpToggle = document.getElementById("arptoggle").checked;
+	let arpSpeed = document.getElementById("arpspeed");
+	let arpSpeedVal = arpSpeed.options[arpSpeed.selectedIndex].value * 1;
+	console.log(arpToggle + " " + arpSpeedVal);
+	modifyBPM();
+	composer.setArpeggioState(0,arpToggle);
+	composer.setArpeggioSpeed(0, arpSpeedVal);
 	composer.play();
 }
 
@@ -85,7 +92,7 @@ function demo() {
 	composer.loadTestData();
 }
 
-function clear() {
+function clearTrack() {
 	console.log("Clear!");
 	composer.clearTrack(0);
 }
