@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+	<head>
+		<meta charset="utf-8">
+		<title>Sequencer test</title>
+		<style>
+			canvas {
+				border-style: solid;
+			}
+		</style>
+		<script src="sounds.js" charset="utf-8"></script>
+		<script>
+
+		/*Arbitrary Matrix size went for 8 instruments with 16 steps each*/
+		let audiomatrix = [
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		];
+
+		/*Graphical Constants*/
+		const margin = 5;
+		const width = 50;
+		const height = 50;
+		function setup() {
+			let canvas = document.getElementById('sequenz');
+			let context = canvas.getContext("2d");
+			canvas.addEventListener('click', function(event) {
+				var xVal = event.pageX - canvas.offsetLeft;
+				var yVal = event.pageY - canvas.offsetTop;
+				console.log(xVal,yVal);
+				/* For Debugging */
+				let x = Math.floor(xVal / (width + margin));
+				let y = Math.floor(yVal / (height + margin));
+				console.log(x,y);
+				if(audiomatrix[y][x] == 0) {
+					audiomatrix[y][x] = 1;
+				} else {
+					audiomatrix[y][x] = 0;
+				}
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				for(let y = 0; y < 8; y++) {
+					for(let x = 0; x < 16; x++) {
+						if(audiomatrix[y][x] == 1) {
+							context.fillStyle = "#FF0000";
+							context.fillRect(x * (width + margin), y * (width + margin), width, height);
+						}
+					}
+				}
+			});
+		}
+
+
+		//AUDIO STUFF
+		const AudioContext = window.AudioContext || window.webkitAudioContext;
+		let audioctx = new AudioContext();
+		let audioPositions = [0,0,0,0,0,0,0,0];
+		let bps = 30/260;
+		let channels = 1;
+		let running = 0;
+		let step = 0;
+
+		function playAudio(currStep) {
+			let currentInstruments = [];
+			for(let instrument = 0; instrument < 8; instrument++) {
+				if(audiomatrix[instrument][currStep] == 1) {
+					audioPositions[instrument] = 1;
+					currentInstruments.push(instrument);
+				}
+			}
+			let frameCount = Math.round(audioctx.sampleRate * bps);
+			let myArrayBuffer = audioctx.createBuffer(channels,frameCount,audioctx.sampleRate);
+			let activenotes = currentInstruments.length;
+			let bufferedNote = 0;
+			for(let channel = 0; channel < channels; channel++) {
+				let nowBuffering = myArrayBuffer.getChannelData(channel);
+				if (activenotes > 0) {
+					for(let i = 0; i < frameCount; i+=activenotes) {
+						for(let j = 0; j < activenotes; j++) {
+							let current = currentInstruments[j];
+							if(audioPositions[current] != 0 && audioPositions[current] <= instruments[current].length) {
+								audioPositions[current] += activenotes;
+								bufferedNote = instruments[current][audioPositions[j] + j];
+							} else {
+								audioPositions[current] = 0;
+								bufferedNote = 0;
+							}
+							nowBuffering[i + j] = bufferedNote;
+						}
+					}
+				} else {
+					for(let i = 0; i < frameCount; i++) {
+						nowBuffering[i] = 0;
+					}
+				}
+			}
+			let source = audioctx.createBufferSource();
+			source.buffer = myArrayBuffer;
+			source.connect(audioctx.destination);
+			source.start();
+			source.onended = () => {
+				if(running == 1) {
+					step++;
+					step%=16;
+					console.log(step);
+					playAudio(step);
+				}
+			}
+		}
+
+		function playPause() {
+			if(running == 0) {
+				running = 1;
+				console.log("Piss and shit");
+				playAudio(step);
+			} else {
+				running = 0;
+			}
+		}
+
+		function stop() {
+			running = 0;
+			step = 0;
+			for(let i = 0; i < 8; i++) {
+				audioPositions[i] = 0;
+			}
+		}
+
+		</script>
+	</head>
+	<body onload="setup();">
+		<p>This is to test sequencing, loading an unloading, basically, I need to make this or I cannot build the sound library</p>
+		<div id="sequencer">
+			<canvas id="sequenz" width="880" height="440"></canvas>
+		</div>
+		<button type="button" id="play" name="play" onclick="playPause();">Play Sequence</button>
+		<button type="button" id="stop" name="stop" onclick="stop();">Stop</button>
+	</body>
+	<script>
+	</script>
+</html>

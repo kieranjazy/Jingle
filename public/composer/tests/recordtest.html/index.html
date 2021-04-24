@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Record Test</title>
+		<script type="text/javascript" src="wavetables.js"></script>
+		<script type="text/javascript" src="metronome.js"></script>
+		<script type="text/javascript" src="sequence.js"></script>
+		<script type="text/javascript" src="composer.js"></script>
+		<script type="text/javascript" src="index.js"></script>
+	</head>
+	<body>
+		<button name="Record" value="record" onclick="record();">Record</button>
+		<button type="button" onclick="dumpRecording()">Dump Recording</button>
+		<button type="button" onclick="play();">Play</button>
+		<button type="button" name="button" onclick="stop();">Stop</button>
+		<button type="button" name="button" onclick="pause();">Pause</button>
+		<button type="button" onclick="demo();">Load Dummy Data</button>
+		<p>BPM:</p><input type="number" id="bpmval"></input><button type="button" onclick="modifyBPM()">Change BPM</button>
+	</body>
+</html>
