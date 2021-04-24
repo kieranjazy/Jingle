@@ -44,6 +44,7 @@ function Composer() {
 	this.isPlaying = false;
 	this.frameLength = 0;
 	this.activeNotes = [[]];
+	this.keyboardState = [];
 	this.keyPositions = [{}];
 	/*Arpeggio Related Info*/
 	this.hasArpeggio = [false];
@@ -508,7 +509,7 @@ Composer.prototype.__record = async function(trackNum) {
 	for(let i = 0; i < totalTrackLength; i++) {
 		//toneKeys is in a different file at the moment
 		//but I'll heap it together soon
-		let currNotes = activeNotes.slice();
+		let currNotes = this.keyboardState.slice();
 		let nextNotes = [];
 		//console.log("Previous Notes: "+prevNotes);
 		//Add currently pressed notes to the sequence and remove notes
