@@ -318,7 +318,6 @@ Composer.prototype.__play = function() {
 								nowBuffering[framePosition + i + offset] = Math.min(Math.max((this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][this.activeNotes[j][k]][this.keyPositions[j][this.activeNotes[j][k]]]),-1),1);
 								this.keyPositions[j][this.activeNotes[j][k]] += (totalNotes - offset);
 								if(this.keyPositions[j][this.activeNotes[j][k]] > this.instrumentBank[j][this.activeNotes[j][k]].length) {
-									console.log("Dead Instrument");
 									dead_instruments.push(this.activeNotes[j][k]);
 									ended_instruments++;
 								}
@@ -354,7 +353,6 @@ Composer.prototype.__play = function() {
 			}
 			framePosition += frameSize;
 		}
-		console.log(nowBuffering);
 	} else {
 		//Stereo - Loading is almost identitical to mono
 		//I had to write it twice to eliminate 1322999 If/Else's!
@@ -370,12 +368,21 @@ Composer.prototype.__play = function() {
 					continue;
 				}
 				if(tempNotes[i][2] == 1) {
-					if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
-						this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
+						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
+							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+						}
+						this.keyPositions[tempNotes[i][0]][tempNotes[i][1]] = 0;
+					} else {
+						let note = tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length;
+						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length) == -1) {
+							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length);
+						}
+						this.keyPositions[tempNotes[i][0]][note] = 0;
+						console.log(this.keyPositions);
 					}
-					this.keyPositions[tempNotes[i][0]][tempNotes[i][1]] = 0;
 				} else {
-					if(this.loadedInstruments[tempNotes[i][0]]["type"] != "wavetable") {
+					if(this.loadedInstruments[tempNotes[i][0]].type !== 0) {
 						continue;
 					}
 					let position = this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]);
@@ -400,8 +407,10 @@ Composer.prototype.__play = function() {
 					}
 					ended_instruments = 0;
 					for(let j = 0; j < this.activeNotes.length; j++) {
-						console.log(j);
-						if(this.loadedInstruments[j]["type"] == "wavetable") {
+						if(this.activeNotes[j].length == 0) {
+							continue;
+						}
+						if(this.loadedInstruments[j]["type"] == 0) {
 							if(this.hasArpeggio[j] && this.activeNotes[j].length > 1) {
 								this.arpeggioPosition[j] %= this.activeNotes[j].length;
 								let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
@@ -431,17 +440,15 @@ Composer.prototype.__play = function() {
 						} else {
 							let dead_instruments = [];
 							for(let k = 0; k < this.activeNotes[j].length; k++) {
-								let note = this.activeNotes[j][k];
-								this.keyPositions[j][note]+=offset;
-								let val = Math.min(Math.max(this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][note][this.keyPositions[j][note]],-1),1);
-								left[framePosition+i+offset] = this.trackVolumes[j][0]*val;
-								right[framePosition+i+offset] = this.trackVolumes[j][1]*val;
-								this.keyPositions[j][note]+=(totalNotes-offset);
-								if(this.keyPositions[j][note] >= this.instrumentBank[j][note].length) {
+								this.keyPositions[j][this.activeNotes[j][k]] += offset;
+								let temp = Math.min(Math.max((this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][this.activeNotes[j][k]][this.keyPositions[j][this.activeNotes[j][k]]]),-1),1);
+								left[nowBuffering + i + offset] = this.trackVolumes[j][0] * temp;
+								right[nowBuffering + i + offset] = this.trackVolumes[j][1] * temp;
+								this.keyPositions[j][this.activeNotes[j][k]] += (totalNotes - offset);
+								if(this.keyPositions[j][this.activeNotes[j][k]] > this.instrumentBank[j][this.activeNotes[j][k]].length) {
+									dead_instruments.push(this.activeNotes[j][k]);
 									ended_instruments++;
-									dead_instruments.push(note);
 								}
-								offset++;
 							}
 							if (ended_instruments > 0) {
 								for(let k = 0; k < this.dead_instruments.length; k++) {
