@@ -19,7 +19,8 @@ function sleep(ms) {
 function Composer() {
 	this.audioctx = new AudioContext();
 	// TODO: Implement DrumKits
-	this.loadedInstruments = [{"name":"01_synth_lead","isLoaded":false,"type":"wavetable"}];
+	this.loadedInstruments = [{"name":"01_synth_lead","isLoaded":false,"type":0},
+														{"name":"drum_machine","isLoaded":false,"type":1}];
 									/*These all follow the form f(x) = (440 * 2^((x-69)/12))/60
 										Where 60 is middle C It's required for the wavetables to work correctly
 										As the Wavetables are all recorded at middle C*/
@@ -34,7 +35,7 @@ function Composer() {
 									7.55087,7.99986,8.47556,8.97954,9.5135,10.0792,10.67854,11.31352,11.98625,12.69899,13.45411,14.25414,
 									15.10173,15.99973,16.95112,17.95909,19.02699,20.1584,21.35708,22.62703,23.97251,25.39799,26.90823,
 									28.50828,30.20347,31.99946,33.90224,35.91818,38.05398,40.31679,42.71415,45.25407,47.94501];
-	this.instrumentBank = [wavetable];
+	this.instrumentBank = [wavetable,instruments];
 	this.bps = 1;
 	//Mono by Default for speed
 	this.channels = 1;
@@ -43,22 +44,24 @@ function Composer() {
 	this.sequenceLength = 0;
 	this.isPlaying = false;
 	this.frameLength = 0;
-	this.activeNotes = [[]];
+	this.activeNotes = [[],[]];
+	//This is where you send keyboard inputs to avoid blank notes being inputted :)
 	this.keyboardState = [];
-	this.keyPositions = [{}];
+	//This is comprised of dictionaries because it takes up less memory than 512 numbers :)
+	this.keyPositions = [{},{}];
 	/*Arpeggio Related Info*/
-	this.hasArpeggio = [false];
-	this.arpeggioSpeed = [1.0];
-	this.arpeggioPosition = [0];
+	this.hasArpeggio = [false,false];
+	this.arpeggioSpeed = [1.0,1.0];
+	this.arpeggioPosition = [0,0];
 	/*Metronome Playback*/
 	this.metronomePlaying = false;
 	this.metronomeSteps = 0;
 	//Master Volume is a value between 0 and 2
 	this.masterVolume = 1.0;
 	this.numTracks = 1;
-	this.trackVolumes = [[1.0,1.0]];
-	this.isMuted = [false];
-	this.instrumentVolumes = [1.0];
+	this.trackVolumes = [[1.0,1.0],[1.0,1.0]];
+	this.isMuted = [false,false];
+	this.instrumentVolumes = [1.0,1.0];
 	this.sequencer = new Sequence();
 	console.log("Composer Object Created");
 }
@@ -171,6 +174,7 @@ Composer.prototype.getTrackMuteState = function(track) {
 }
 
 Composer.prototype.__play = function() {
+	console.log(this.instrumentBank)
 	this.isPlaying = true;
 	this.sequenceLength = this.sequencer.getLength();
 	/* (44100 * bps)/32*/
@@ -205,13 +209,24 @@ Composer.prototype.__play = function() {
 					*/
 					/* Note on*/
 				if(tempNotes[i][2] == 1) {
-					if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
-						this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
+						// Standard wavetable synth
+						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
+							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+						}
+						this.keyPositions[tempNotes[i][0]][tempNotes[i][1]] = 0;
+					} else {
+						//Drumkit stuff :)
+						let note = tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length;
+						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length) == -1) {
+							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length);
+						}
+						this.keyPositions[tempNotes[i][0]][note] = 0;
+						console.log(this.keyPositions);
 					}
-					this.keyPositions[tempNotes[i][0]][tempNotes[i][1]] = 0;
 				} else {
 					//Drums Are Triggered not Gated
-					if(this.loadedInstruments[tempNotes[i][0]]["type"] != "wavetable") {
+					if(this.loadedInstruments[tempNotes[i][0]].type !== 0) {
 						continue;
 					}
 					//Note Off
@@ -240,7 +255,10 @@ Composer.prototype.__play = function() {
 					}
 					ended_instruments = 0;
 					for(let j = 0; j < this.activeNotes.length; j++) {
-						if(this.loadedInstruments[j]["type"] == "wavetable") {
+						if(this.activeNotes[j].length == 0) {
+							continue;
+						}
+						if(this.loadedInstruments[j]["type"] === 0) {
 							//Arpeggio Code (experimental :) )
 							//As you cannot alternate between notes if only one is playing, it doesn't arpeggiate if that's the case
 							if(this.hasArpeggio[j] && this.activeNotes[j].length > 1) {
@@ -296,20 +314,19 @@ Composer.prototype.__play = function() {
 							*/
 							let dead_instruments = [];
 							for(let k = 0; k < this.activeNotes[j].length; k++) {
-								let note = this.activeNotes[j][k];
-								this.keyPositions[j][note]+=offset;
-								nowBuffering[framePosition + i + offset] = Math.min(Math.max(this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][note][this.keyPositions[j][note]],-1),1);
-								this.keyPositions[j][note]+=(totalNotes-offset);
-								if(this.keyPositions[j][note] >= this.instrumentBank[j][note].length) {
+								this.keyPositions[j][this.activeNotes[j][k]] += offset;
+								nowBuffering[framePosition + i + offset] = Math.min(Math.max((this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][this.activeNotes[j][k]][this.keyPositions[j][this.activeNotes[j][k]]]),-1),1);
+								this.keyPositions[j][this.activeNotes[j][k]] += (totalNotes - offset);
+								if(this.keyPositions[j][this.activeNotes[j][k]] > this.instrumentBank[j][this.activeNotes[j][k]].length) {
+									console.log("Dead Instrument");
+									dead_instruments.push(this.activeNotes[j][k]);
 									ended_instruments++;
-									dead_instruments.push(note);
 								}
-								offset++;
 							}
 								//Purge dead instruments, This is performed for drumkits as they are triggered rather than gated.
 								//It also guarantees that it doesn't sound like complete muck to the listener
 							if (ended_instruments > 0) {
-								for(let k = 0; k < this.dead_instruments.length; k++) {
+								for(let k = 0; k < dead_instruments.length; k++) {
 									this.activeNotes[j].splice(this.activeNotes[j].indexOf(dead_instruments[k]),1);
 								}
 							}
@@ -330,10 +347,14 @@ Composer.prototype.__play = function() {
 			}
 			//Add Arpeggio increments
 			for(let i = 0; i < this.arpeggioPosition.length; i++) {
+				if(this.activeNotes[i].length == NaN || this.activeNotes[i].length == 0) {
+					continue;
+				}
 				this.arpeggioPosition[i] = (this.arpeggioPosition[i] + this.arpeggioSpeed[i]) % this.activeNotes[i].length;
 			}
 			framePosition += frameSize;
 		}
+		console.log(nowBuffering);
 	} else {
 		//Stereo - Loading is almost identitical to mono
 		//I had to write it twice to eliminate 1322999 If/Else's!
@@ -486,7 +507,7 @@ Composer.prototype.stop = async function() {
 		});
 		audioctx = new AudioContext();
 	}
-	this.activeNotes=[[]];
+	this.activeNotes=[[],[]];
 	this.sequencePosition=0;
 	this.isPlaying = false;
 }
