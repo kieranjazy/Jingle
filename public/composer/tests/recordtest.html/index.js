@@ -56,6 +56,7 @@ window.onkeyup = function(event) {
 
 function record() {
 	console.log("Record");
+	modifyBPM();
 	composer.record(0);
 }
 
@@ -94,4 +95,9 @@ function demo() {
 function clearTrack() {
 	console.log("Clear!");
 	composer.clearTrack(0);
+}
+
+function playMetronome() {
+	console.log("Commencing Metronome");
+	composer.playMetronome();
 }

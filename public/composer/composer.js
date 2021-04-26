@@ -4,7 +4,7 @@ let audioctx = new AudioContext();
  * Composer
  * Version 2.1 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 24/04/2021
+ * Last Edited 26/04/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -50,6 +50,9 @@ function Composer() {
 	this.hasArpeggio = [false];
 	this.arpeggioSpeed = [1.0];
 	this.arpeggioPosition = [0];
+	/*Metronome Playback*/
+	this.metronomePlaying = false;
+	this.metronomeSteps = 0;
 	//Master Volume is a value between 0 and 2
 	this.masterVolume = 1.0;
 	this.numTracks = 1;
@@ -535,9 +538,12 @@ Composer.prototype.__record = async function(trackNum) {
 	}
 	console.log("Recording finished");
 	this.isPlaying = false;
+	this.stop();
+	this.metronomePlaying = false;
+	this.metronomeSteps = 0;
 };
 
-Composer.prototype.record = function(trackNum) {
+Composer.prototype.record = async function(trackNum) {
 	//Flushing this for good reason :)
 	this.sequencePosition = 0;
 	for(let i = 0; i < this.keyPositions.length; i++) {
@@ -553,36 +559,46 @@ Composer.prototype.record = function(trackNum) {
 		}
 		this.numTracks = trackNum;
 	}
-	//Play four beeps of a metronome at the pace of the song before input
-	let frameCount = 4 * Math.floor(audioctx.sampleRate * this.bps);
-	let myArrayBuffer = audioctx.createBuffer(this.channels,frameCount,audioctx.sampleRate);
-	for(let channel = 0; channel < this.channels; channel++) {
-		let nowBuffering = myArrayBuffer.getChannelData(channel);
-		for(let i = 0; i < this.bps*4*44100; i+=this.bps*44100) {
-			for(let l = 0; l < this.bps*44100; l++) {
-				if(l >= metronome.length) {
-					while(l < this.bps*44100) {
-						nowBuffering[i + l] = 0;
-						l++;
+	if(!this.metronomePlaying) {
+		//Play four beeps of a metronome at the pace of the song before input
+		let frameCount = 4 * Math.floor(audioctx.sampleRate * this.bps);
+		let myArrayBuffer = audioctx.createBuffer(this.channels,frameCount,audioctx.sampleRate);
+		for(let channel = 0; channel < this.channels; channel++) {
+			let nowBuffering = myArrayBuffer.getChannelData(channel);
+			for(let i = 0; i < this.bps*4*44100; i+=this.bps*44100) {
+				for(let l = 0; l < this.bps*44100; l++) {
+					if(l >= metronome.length) {
+						while(l < this.bps*44100) {
+							nowBuffering[i + l] = 0;
+							l++;
+						}
+						break;
 					}
-					break;
+					nowBuffering[i + l] = metronome[l];
 				}
-				nowBuffering[i + l] = metronome[l];
 			}
 		}
+		let source = audioctx.createBufferSource();
+		source.buffer = myArrayBuffer;
+		source.connect(audioctx.destination);
+		source.start();
+		//I could not think of another way to get it to start
+		//recording after the metronome plays
+		source.onended = () => {this.__record(trackNum)};
+	} else {
+		let tempSteps = this.metronomeSteps * 1;
+		while((this.metronomeSteps - tempSteps) < 4) {
+			await sleep(50);
+		}
+		this.__record(trackNum);
 	}
-	let source = audioctx.createBufferSource();
-	source.buffer = myArrayBuffer;
-	source.connect(audioctx.destination);
-	source.start();
-	//I could not think of another way to get it to start
-	//recording after the metronome plays
-	source.onended = () => {this.__record(trackNum)};
 };
 
 Composer.prototype.playMetronome = async function() {
+	/*Basically the way this will work is that it'll get rid of the four leading metronome beats if the metronome is already playing :)*/
+	this.metronomePlaying = true;
 	let duration = Math.floor(this.bps*audioctx.sampleRate);
-	let myArrayBuffer = audioctx.createBuffer(0,duration,audioctx.sampleRate);
+	let myArrayBuffer = audioctx.createBuffer(1,duration,audioctx.sampleRate);
 	let nowBuffering = myArrayBuffer.getChannelData(0);
 	for(let i = 0; i < duration; i++) {
 		if(i < metronome.length) {
@@ -590,13 +606,16 @@ Composer.prototype.playMetronome = async function() {
 		} else {
 			while(i < duration) {
 				nowBuffering[i] = 0;
+				i++;
 			}
+			break;
 		}
 	}
 	let source = audioctx.createBufferSource();
 	source.buffer = myArrayBuffer;
 	source.connect(audioctx.destination);
-	source.onended = () => {this.playMetronome()};
+	source.start();
+	source.onended = () => {this.playMetronome();this.metronomeSteps++;};
 };
 
 Composer.prototype.fetchInstrument = function(instrument) {
