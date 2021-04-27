@@ -29,7 +29,7 @@ class VisualNote extends React.Component {
         this.expand = this.expand.bind(this);
 
         this.divRef = React.createRef();
-        this.requestID = 0;  
+        this.requestID = 0;
     }
 
     componentDidMount = () => {
@@ -41,10 +41,14 @@ class VisualNote extends React.Component {
 
     expand() {
         if (this.state.isExpanding) {
-            this.divRef.current.style.width = String(this.state.width) + 'px';
-            this.setState({
-                width: (this.state.width + 1),
-            });
+            if (this.divRef.current) {
+                this.divRef.current.style.width = String(this.state.width) + 'px';
+                this.setState({
+                    width: (this.state.width + 1),
+                });
+            } else {
+                this.toggleIsExpanding();
+            }
         } else {
             clearInterval(this.requestID);
         }
@@ -54,6 +58,12 @@ class VisualNote extends React.Component {
         this.setState({
             isExpanding: (!this.state.isExpanding),
         });
+    }
+
+    setIsExpanding = (newState) => {
+        this.setState({
+            isExpanding: newState,
+        })
     }
 
     setYValue(newValue) {
@@ -85,4 +95,4 @@ class VisualNote extends React.Component {
     }
 }
 
-export default withStyles(useStyles, { withTheme: true})(VisualNote);
+export default withStyles(useStyles, { withTheme: true })(VisualNote);

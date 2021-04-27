@@ -16,7 +16,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { ThreeSixtyOutlined } from '@material-ui/icons';
 
 const toneKeys = [
-    "KeyA","KeyW","KeyS","KeyE","KeyD","KeyF","KeyT","KeyG","KeyY","KeyH","KeyU","KeyJ","KeyK","KeyO","KeyL","KeyP"
+    "KeyA", "KeyW", "KeyS", "KeyE", "KeyD", "KeyF", "KeyT", "KeyG", "KeyY", "KeyH", "KeyU", "KeyJ", "KeyK", "KeyO", "KeyL", "KeyP"
 ];
 
 const useStyles = theme => ({
@@ -103,23 +103,26 @@ class Track extends React.Component {
             trackLength: 8000,
             timeStart: null,
             visualNotes: [],
+            //activeKeyCounter: 0
         };
 
         this.volumeChange = this.volumeChange.bind(this);
         this.panChange = this.panChange.bind(this);
         this.clearTrack = this.clearTrack.bind(this);
-        this.addCurrentHeldKey = this.addCurrentHeldKey.bind(this);
+        this.findFirstNonNullIndex = this.findFirstNonNullIndex.bind(this);
+        //this.addCurrentHeldKey = this.addCurrentHeldKey.bind(this);
 
         this.redBarRef = React.createRef();
         this.noteRef = React.createRef();
         //this.currentVisualNoteRef = React.createRef();
 
         this.activeOctaves = [];
-        this.currentHeldKeys = [];
         this.currentVisualNoteRefs = [];
+        this.activeNotes = [null, null, null, null, null, null, null, null, null, null];
+
         let i = 0;
-        for (; i != 5; i++) {
-            this.currentVisualNoteRefs.push(React.createRef());
+        for (; i != 10; i++) {
+            this.currentVisualNoteRefs[i] = React.createRef();
         }
 
     }
@@ -144,22 +147,12 @@ class Track extends React.Component {
 
     addVisualNote = (index, xValue, yValue) => {
         this.setState({
-            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]}/>],
+            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]} />],
         })
 
         if (this.activeOctaves.indexOf(this.state.composerOctave) != -1) {
             this.activeOctaves = [...this.state.activeOctaves, this.state.composerOctave];
         }
-    }
-
-    addCurrentHeldKey = (value) => {
-        this.currentHeldKeys = [...this.currentHeldKeys, value];
-        console.log(this.currentHeldKeys);
-        //console.log(this.state.currentHeldKeys)
-    }
-
-    removeCurrentHeldKey = (index) => {
-        this.currentHeldKeys.splice(index, 1);
     }
 
     clearTrack = () => {
@@ -176,63 +169,87 @@ class Track extends React.Component {
         this.redBarRef.current.style.animationPlayState = 'initial';
         //this.currentVisualNoteRef = React.createRef();
         let i = 0;
-        for (; i != 5; i++) {
+        for (; i != 10; i++) {
             this.currentVisualNoteRefs[i] = React.createRef();
         }
     }
 
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        if (nextProps.playTimelineState != this.props.playTimelineState) {
-            if (nextProps.playTimelineState === 'pause') {
+    componentDidUpdate(prevProps) {
+        if (this.props.playTimelineState != prevProps.playTimelineState) {
+            if (this.props.playTimelineState === 'pause') {
                 this.redBarRef.current.style.animationPlayState = 'paused';
-            } else if (nextProps.playTimelineState === 'play' || nextProps.playTimelineState === 'record') {
-                this.redBarRef.current.style.animationDuration = nextProps.getTrackLength() + 'ms';
-                this.trackLengthChange(nextProps.getTrackLength());
+            } else if (this.props.playTimelineState === 'play' || this.props.playTimelineState === 'record') {
+                this.redBarRef.current.style.animationDuration = this.props.getTrackLength() + 'ms';
+                this.trackLengthChange(this.props.getTrackLength());
                 this.redBarRef.current.style.animationPlayState = 'inherit';
 
-                if (nextProps.playTimelineState === 'record') {
-                    this.setState({timeStart: performance.now()});
+                if (this.props.playTimelineState === 'record') {
+                    this.setState({ timeStart: performance.now() });
                 }
             }
 
             this.setState({
-                timelineAnimation: nextProps.playTimelineState,
+                timelineAnimation: this.props.playTimelineState
             });
         }
 
-        if (nextProps.keyPressValue != this.props.keyPressValue || nextProps.keyPressState != this.props.keyPressState) {
-            if (this.props.keyPressState === 'down' && nextProps.keyPressValue != this.props.keyPressValue) {
-                if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) === -1) {
-                    this.addCurrentHeldKey(nextProps.keyPressValue);
-                    console.log(this.state);
+        /*
+        if (this.props.keyPressEvent != prevProps.keyPressEvent) {
+            if (this.props.keyPressEvent[1] == 'down') {
+                this.addVisualNote(this.state.activeKeyCounter - 1, (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length))
+                this.setState({activeKeyCounter: this.state.activeKeyCounter + 1});
+                console.log(this.state.activeKeyCounter)
+                
+
+            } else if (this.props.keyPressEvent[1] == 'up') {
+                console.log(this.state.activeKeyCounter);
+                this.currentVisualNoteRefs[this.state.activeKeyCounter - 1].current.toggleIsExpanding(); //find a way to modify index to include this.props.keyPressEvent[0]
+                this.setState({activeKeyCounter: this.state.activeKeyCounter - 1});
+                
+            }
+        }
+        */
+
+        if (this.props.keyPressEvent != prevProps.keyPressEvent && toneKeys.indexOf(this.props.keyPressEvent[0]) != -1) {
+            if (this.props.keyPressEvent[1] == 'down' && this.activeNotes.indexOf(this.props.keyPressEvent[0]) == -1) {
+                this.addVisualNote(this.findFirstNonNullIndex(this.activeNotes), (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length));
+
+                this.activeNotes[this.findFirstNonNullIndex(this.activeNotes)] = this.props.keyPressEvent[0];
+
+            } else if (this.props.keyPressEvent[1] == 'up') {
+
+                if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])]) {
+                    if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current) {
+                        this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current.setIsExpanding(false);
+                        this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])] = React.createRef();
+                    } else if (this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])].current) {
+                        this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])].current.setIsExpanding(false);
+                        this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])] = React.createRef();
+                    }
                 }
 
-                this.addVisualNote(this.currentHeldKeys.indexOf(nextProps.keyPressValue), (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(nextProps.keyPressValue) + 1)) * (140 / toneKeys.length));
-            } else if (nextProps.keyPressState === 'up') {
-                this.currentVisualNoteRefs[this.currentHeldKeys.indexOf(nextProps.keyPressValue)].current.toggleIsExpanding();
-
-
-                if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
-                    this.removeCurrentHeldKey(this.currentHeldKeys.indexOf(nextProps.keyPressValue));
-                }
+                this.activeNotes[this.activeNotes.indexOf(this.props.keyPressEvent[0])] = null;
             }
         }
 
-        if (nextProps.keyPressState === 'up' && this.props.keyPressState === 'up' && this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
-            console.log(this.currentHeldKeys + " Current: " + this.props.keyPressValue + " Next: " + nextProps.keyPressValue);
-            this.currentVisualNoteRefs[this.currentHeldKeys.indexOf(nextProps.keyPressValue)].current.toggleIsExpanding();
-
-            if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
-                this.removeCurrentHeldKey(this.currentHeldKeys.indexOf(nextProps.keyPressValue));
-            }
-        }
-        
     }
 
     componentWillUnmount() {
         this.setState({
             timelineAnimation: 'stop',
         })
+    }
+
+
+    findFirstNonNullIndex = (array) => {
+        let i = 0;
+        for (; i != 10; i++) {
+            if (array[i] == null) {
+                return i;
+            }
+        }
+
+        return 0;
     }
 
 
@@ -273,33 +290,33 @@ class Track extends React.Component {
                     <div className={classes.sliders}>
                         <Grid container spacing={1}>
                             <Grid item xs={2}>
-                                <VolumeDown fontSize={'small'}/>
+                                <VolumeDown fontSize={'small'} />
                             </Grid>
 
                             <Grid item xs={8}>
-                                <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200} style={{width: 85}}>
+                                <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200} style={{ width: 85 }}>
 
                                 </Slider>
                             </Grid>
 
                             <Grid item xs={2}>
-                                <VolumeUp fontSize={'small'}/>
+                                <VolumeUp fontSize={'small'} />
                             </Grid>
                         </Grid>
 
-                        <Grid container spacing={1} style={{position: 'relative', top: '-5px'}}>
+                        <Grid container spacing={1} style={{ position: 'relative', top: '-5px' }}>
                             <Grid item xs={2}>
-                                <ChevronLeftIcon fontSize={'small'}/>
+                                <ChevronLeftIcon fontSize={'small'} />
                             </Grid>
 
                             <Grid item xs={8}>
-                                <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05} style={{width: 85}}>
+                                <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05} style={{ width: 85 }}>
 
                                 </Slider>
                             </Grid>
 
                             <Grid item xs={2}>
-                                <ChevronRightIcon fontSize={'small'}/>
+                                <ChevronRightIcon fontSize={'small'} />
                             </Grid>
 
                         </Grid>

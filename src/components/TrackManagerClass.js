@@ -60,8 +60,7 @@ class TrackManager extends React.Component {
             soloArray: [0, 0, 0, 0],
             playTimelineState: 'stop',
             octave: 4,
-            keyPressState: 'none',
-            keyPressValue: 'none'
+            keyPressEvent: ['noKey', 'noState']
         };
 
         this.composer = new Composer();
@@ -110,12 +109,12 @@ class TrackManager extends React.Component {
         console.log(this.composer.getBpm);
     }
 
-    setKeyPressState = (newState) => {
-        this.setState({keyPressState: newState});
+    setKeyPressEvent = (keyPress, state) => {
+        this.setState({keyPressEvent: [keyPress, state]});
     }
 
-    setKeyPressValue = (newState) => {
-        this.setState({keyPressValue: newState});
+    setKeyPressValue = (keyPress, state) => {
+        this.setState({keyPressEvent: keyPress, state});
     }
 
     submitHandler = (e) => {
@@ -159,8 +158,7 @@ class TrackManager extends React.Component {
 
         if (toneKeys.includes(event.code) && this.state.playTimelineState === 'record') {
             if (!event.repeat) {
-                this.setKeyPressState('down');
-                this.setKeyPressValue(event.code);
+                this.setKeyPressEvent(event.code, 'down');
             }
 
             let index = toneKeys.indexOf(event.code);
@@ -174,9 +172,7 @@ class TrackManager extends React.Component {
 
     keyUpCallback = (event) => {
         if (toneKeys.includes(event.code) && this.state.playTimelineState === 'record') {
-            this.setKeyPressValue(event.code);
-            this.setKeyPressState('up');
-            
+            this.setKeyPressEvent(event.code, 'up')
 
             let index = toneKeys.indexOf(event.code);
             let note = ((this.state.octave + 1) * 12) + index;
@@ -190,10 +186,6 @@ class TrackManager extends React.Component {
 
     composerClearTrack = (trackNo) => {
         this.composer.clearTrack(trackNo);
-    }
-
-    getComposerKeyboardState = () => {
-        return this.composer.keyboardState;
     }
 
     componentDidMount() {
@@ -238,10 +230,10 @@ class TrackManager extends React.Component {
                 </div>
 
                 <div className={classes.trackDiv}>
-                    <Track clearTrackCallback={() => this.composerClearTrack(0)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track clearTrackCallback={() => this.composerClearTrack(1)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track clearTrackCallback={() => this.composerClearTrack(2)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track clearTrackCallback={() => this.composerClearTrack(3)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(0)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressEvent={this.state.keyPressEvent}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(1)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressEvent={this.state.keyPressEvent}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(2)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressEvent={this.state.keyPressEvent}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(3)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressEvent={this.state.keyPressEvent}/>
                 </div>
 
                 <WidgetBar/>
