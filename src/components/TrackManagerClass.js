@@ -9,6 +9,7 @@ import VolumeUp from '@material-ui/icons/VolumeUp';
 import TextField from '@material-ui/core/TextField'
 import Track from './Track'
 import Composer from './Composer'
+import WidgetBar from './WidgetBar'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import PauseIcon from '@material-ui/icons/Pause';
 import StopIcon from '@material-ui/icons/Stop';
@@ -43,7 +44,6 @@ const useStyles = theme => ({
 
 const keyBindings = [
     "KeyZ","KeyX",
-    "KeySpace"
 ];
 
 const toneKeys = [
@@ -59,14 +59,15 @@ class TrackManager extends React.Component {
             muteArray: [0, 0, 0, 0],
             soloArray: [0, 0, 0, 0],
             playTimelineState: 'stop',
-            composer: new Composer(),
             octave: 4,
             keyPressState: 'none',
             keyPressValue: 'none'
         };
 
-        this.state.composer.setMasterVolume(this.state.masterVolume);
-        this.state.composer.setBpm(this.state.bpm);
+        this.composer = new Composer();
+
+        this.composer.setMasterVolume(this.state.masterVolume);
+        this.composer.setBpm(this.state.bpm);
 
         this.textFieldRef = React.createRef();
         this.rootDivRef = React.createRef();
@@ -82,17 +83,17 @@ class TrackManager extends React.Component {
 
         if (newState === 'record') {
             this.setState({playTimelineState: 'recordPre'})
-            this.state.composer.record(0);
+            this.composer.record(0);
             setTimeout(() => {this.setState({playTimelineState: 'record'})}, 240000 / this.state.bpm); //magic number dont ask dont tell
         } else {
             this.setState({playTimelineState: newState});
 
             if (newState == 'play') {
-                this.state.composer.play();
+                this.composer.play();
             } else if (newState == 'pause') {
-                this.state.composer.pause();
+                this.composer.pause();
             } else if (newState == 'stop') {
-                this.state.composer.stop();
+                this.composer.stop();
             }
         }
         
@@ -100,12 +101,13 @@ class TrackManager extends React.Component {
 
     setMasterVolume = (e, newState) => {
         this.setState({masterVolume: newState});
-        this.state.composer.setMasterVolume(this.state.masterVolume);
+        this.composer.setMasterVolume(this.state.masterVolume);
     }
 
     setBPM = (newState) => {
         this.setState({bpm: newState});
-        this.state.composer.setBpm(this.state.bpm);
+        this.composer.setBpm(this.state.bpm);
+        console.log(this.composer.getBpm);
     }
 
     setKeyPressState = (newState) => {
@@ -129,6 +131,8 @@ class TrackManager extends React.Component {
             muteArray: tempMuteArray
         });
 
+        this.composer.setTrackMuteState(0, this.state.muteArray[0]);
+
         console.log("muteArray[" + trackNo + "] was toggled.")
     }
 
@@ -136,7 +140,23 @@ class TrackManager extends React.Component {
 
     }
 
+    getMuteArrayIndex = (trackNo) => {
+        return this.state.muteIndex[trackNo];
+    }
+
     keyDownCallback = (event) => {
+        if (keyBindings.includes(event.code)) {
+            let index = keyBindings.indexOf(event.code);
+            console.log(index);
+
+            if (index == 0)
+                this.setState({octave: this.state.octave - 1});
+
+            if (index == 1) 
+                this.setState({octave: this.state.octave + 1});
+        }
+
+
         if (toneKeys.includes(event.code) && this.state.playTimelineState === 'record') {
             if (!event.repeat) {
                 this.setKeyPressState('down');
@@ -146,37 +166,40 @@ class TrackManager extends React.Component {
             let index = toneKeys.indexOf(event.code);
             let note = ((this.state.octave + 1) * 12) + index;
 
-            if (this.state.composer.activeNotes.indexOf(note) === -1) {
-                this.state.composer.activeNotes.push(note);
-                console.log(this.state.composer.activeNotes);
+            if (this.composer.keyboardState.indexOf(note) === -1) {
+                this.composer.keyboardState.push(note);
             }
         }
     }
 
     keyUpCallback = (event) => {
         if (toneKeys.includes(event.code) && this.state.playTimelineState === 'record') {
+            this.setKeyPressValue(event.code);
             this.setKeyPressState('up');
+            
 
             let index = toneKeys.indexOf(event.code);
             let note = ((this.state.octave + 1) * 12) + index;
-            let nIndex = this.state.composer.activeNotes.indexOf(note);
+            let nIndex = this.composer.keyboardState.indexOf(note);
 
             if (nIndex != -1) {
-                this.state.composer.activeNotes.splice(nIndex, 1);
-                console.log(this.state.composer.activeNotes);
+                this.composer.keyboardState.splice(nIndex, 1);
             }
         }
+    }
+
+    composerClearTrack = (trackNo) => {
+        this.composer.clearTrack(trackNo);
+    }
+
+    getComposerKeyboardState = () => {
+        return this.composer.keyboardState;
     }
 
     componentDidMount() {
         this.rootDivRef.current.addEventListener('keydown', this.keyDownCallback);
         this.rootDivRef.current.addEventListener('keyup', this.keyUpCallback);
         //this.rootDivRef.current.focus();
-    }
-
-
-    componentWillUnmount() {
-
     }
 
     render() {
@@ -192,6 +215,7 @@ class TrackManager extends React.Component {
                         <Button onClick={() => this.setPlayTimelineState('pause')}><PauseIcon/></Button>
                         <Button onClick={() => this.setPlayTimelineState('stop')}><StopIcon/></Button>
                         <Button onClick={() => this.setPlayTimelineState('record')}><FiberManualRecordIcon/></Button>
+                        <Button onClick={() => this.composer.playMetronome()}>Metronome</Button>
                     </ButtonGroup>
 
                     <Grid container spacing={1}>
@@ -208,19 +232,19 @@ class TrackManager extends React.Component {
                         </Grid>
                     </Grid>
 
-                    <Button style={{ marginRight: 50, width: 120 }}>Metronome</Button>
-
                     <form className={classes.BPM} noValidate autoComplete='off' onSubmit={this.submitHandler}>
                         <TextField defaultValue={this.state.bpm} label="BPM" inputRef={this.textFieldRef}/>
                     </form>
                 </div>
 
                 <div className={classes.trackDiv}>
-                    <Track setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
-                    <Track setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(0)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(1)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(2)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
+                    <Track clearTrackCallback={() => this.composerClearTrack(3)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} playTimelineState={this.state.playTimelineState} getTrackLength={this.getTrackLength} keyPressState={this.state.keyPressState} keyPressValue={this.state.keyPressValue}/>
                 </div>
+
+                <WidgetBar/>
             </div>
         );
     }

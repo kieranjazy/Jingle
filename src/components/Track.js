@@ -13,6 +13,7 @@ import VolumeUp from '@material-ui/icons/VolumeUp';
 import Grid from '@material-ui/core/Grid'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import { ThreeSixtyOutlined } from '@material-ui/icons';
 
 const toneKeys = [
     "KeyA","KeyW","KeyS","KeyE","KeyD","KeyF","KeyT","KeyG","KeyY","KeyH","KeyU","KeyJ","KeyK","KeyO","KeyL","KeyP"
@@ -101,15 +102,26 @@ class Track extends React.Component {
             timelineAnimation: 'stop',
             trackLength: 8000,
             timeStart: null,
-            visualNotes: [], //onkeypress add visual note to each track's arrau
+            visualNotes: [],
         };
 
         this.volumeChange = this.volumeChange.bind(this);
         this.panChange = this.panChange.bind(this);
+        this.clearTrack = this.clearTrack.bind(this);
+        this.addCurrentHeldKey = this.addCurrentHeldKey.bind(this);
 
         this.redBarRef = React.createRef();
         this.noteRef = React.createRef();
-        this.currentVisualNoteRef = React.createRef();
+        //this.currentVisualNoteRef = React.createRef();
+
+        this.activeOctaves = [];
+        this.currentHeldKeys = [];
+        this.currentVisualNoteRefs = [];
+        let i = 0;
+        for (; i != 5; i++) {
+            this.currentVisualNoteRefs.push(React.createRef());
+        }
+
     }
 
     volumeChange = (event, newValue) => {
@@ -130,10 +142,43 @@ class Track extends React.Component {
         });
     }
 
-    addVisualNote = (xValue, yValue) => {
+    addVisualNote = (index, xValue, yValue) => {
         this.setState({
-            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRef}/>]
+            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]}/>],
         })
+
+        if (this.activeOctaves.indexOf(this.state.composerOctave) != -1) {
+            this.activeOctaves = [...this.state.activeOctaves, this.state.composerOctave];
+        }
+    }
+
+    addCurrentHeldKey = (value) => {
+        this.currentHeldKeys = [...this.currentHeldKeys, value];
+        console.log(this.currentHeldKeys);
+        //console.log(this.state.currentHeldKeys)
+    }
+
+    removeCurrentHeldKey = (index) => {
+        this.currentHeldKeys.splice(index, 1);
+    }
+
+    clearTrack = () => {
+        this.props.clearTrackCallback();
+
+        this.setState({
+            pan: 0.5,
+            volume: 100,
+            timelineAnimation: 'stop',
+            visualNotes: [],
+            activeOctaves: [],
+        });
+
+        this.redBarRef.current.style.animationPlayState = 'initial';
+        //this.currentVisualNoteRef = React.createRef();
+        let i = 0;
+        for (; i != 5; i++) {
+            this.currentVisualNoteRefs[i] = React.createRef();
+        }
     }
 
     UNSAFE_componentWillReceiveProps(nextProps) {
@@ -155,13 +200,33 @@ class Track extends React.Component {
             });
         }
 
-        if (nextProps.keyPressState != this.props.keyPressState) {
-            if (nextProps.keyPressState === 'down') {
-                this.addVisualNote(((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050, toneKeys.indexOf(nextProps.keyPressValue) * (140 / toneKeys.length));
+        if (nextProps.keyPressValue != this.props.keyPressValue || nextProps.keyPressState != this.props.keyPressState) {
+            if (this.props.keyPressState === 'down' && nextProps.keyPressValue != this.props.keyPressValue) {
+                if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) === -1) {
+                    this.addCurrentHeldKey(nextProps.keyPressValue);
+                    console.log(this.state);
+                }
+
+                this.addVisualNote(this.currentHeldKeys.indexOf(nextProps.keyPressValue), (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(nextProps.keyPressValue) + 1)) * (140 / toneKeys.length));
             } else if (nextProps.keyPressState === 'up') {
-                this.currentVisualNoteRef.current.toggleIsExpanding();
+                this.currentVisualNoteRefs[this.currentHeldKeys.indexOf(nextProps.keyPressValue)].current.toggleIsExpanding();
+
+
+                if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
+                    this.removeCurrentHeldKey(this.currentHeldKeys.indexOf(nextProps.keyPressValue));
+                }
             }
         }
+
+        if (nextProps.keyPressState === 'up' && this.props.keyPressState === 'up' && this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
+            console.log(this.currentHeldKeys + " Current: " + this.props.keyPressValue + " Next: " + nextProps.keyPressValue);
+            this.currentVisualNoteRefs[this.currentHeldKeys.indexOf(nextProps.keyPressValue)].current.toggleIsExpanding();
+
+            if (this.currentHeldKeys.indexOf(nextProps.keyPressValue) != -1) {
+                this.removeCurrentHeldKey(this.currentHeldKeys.indexOf(nextProps.keyPressValue));
+            }
+        }
+        
     }
 
     componentWillUnmount() {
@@ -201,7 +266,7 @@ class Track extends React.Component {
 
                         <FormGroup column>
                             <Button>Select</Button>
-                            <Button>Clear</Button>
+                            <Button onClick={this.clearTrack}>Clear</Button>
                         </FormGroup>
                     </div>
 
@@ -238,10 +303,6 @@ class Track extends React.Component {
                             </Grid>
 
                         </Grid>
-
-
-
-                        
                     </div>
                 </div>
             </div>

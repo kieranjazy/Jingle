@@ -87,16 +87,23 @@ Sequence.prototype.setLength = function(val) {
 };
 
 Sequence.prototype.removeInstrument = function(instrument) {
-	for(let i = 0; i < this.sequenceLength; i++) {
-		if(typeof(this.sequenceData[i]) == "undefined") {
-			continue;
-		}
-		for(let j = 0; j < this.sequenceData[i].length; j++) {
-			if(this.sequenceData[i][j][0] == instrument) {
-				this.sequence[i].splice(j,1);
+	//Iterate through keys and nothing else
+	console.log("Deleting Data for Instrument: " + instrument);
+	for(let key in this.sequenceData) {
+		for(let i = 0; i < this.sequenceData[key].length; i++) {
+			if(this.sequenceData[key][i][0] == instrument) {
+				this.sequenceData[key].splice(i,1);
+				i--;
+				//Delete step if it contains nothing else
+				if(this.sequenceData[key].length == 0) {
+					delete this.sequenceData[key];
+					break;
+				}
+				continue;
 			}
 		}
 	}
+	console.log("Data Purged!");
 };
 
 Sequence.prototype.getTrackData = function() {
@@ -105,6 +112,11 @@ Sequence.prototype.getTrackData = function() {
 
 Sequence.prototype.loadTrackData = function(data) {
 	this.sequenceData = JSON.parse(data);
+}
+
+Sequence.prototype.loadDummyData = function() {
+	this.sequenceData = {"0":[[0,60,1]],"26":[[0,60,0]],"36":[[0,60,1]],"64":[[0,60,0]],"76":[[0,67,1]],"97":[[0,67,0]],"113":[[0,67,1]],"136":[[0,67,0]],"172":[[0,69,1]],"188":[[0,69,0]],"207":[[0,69,1]],"223":[[0,69,0]],"239":[[0,67,1]],"281":[[0,67,0]],"294":[[0,65,1]],"310":[[0,65,0]],"327":[[0,65,1]],"342":[[0,65,0]],"357":[[0,64,1]],"378":[[0,64,0]],"390":[[0,64,1]],"411":[[0,64,0]],"420":[[0,62,1]],"438":[[0,62,0]],"448":[[0,62,1]],"468":[[0,62,0]],"477":[[0,60,1]],"496":[[0,60,0]]};
+	this.sequenceLength = 960;
 }
 
 export default Sequence;
