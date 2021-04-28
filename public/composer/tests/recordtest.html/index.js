@@ -54,10 +54,10 @@ window.onkeyup = function(event) {
 	}
 }
 
-function record() {
-	console.log("Record");
+function record(trackNum) {
+	console.log("Recording Track: " + trackNum);
 	modifyBPM();
-	composer.record(0);
+	composer.record(trackNum);
 }
 
 function modifyBPM() {
@@ -92,9 +92,9 @@ function demo() {
 	composer.loadTestData();
 }
 
-function clearTrack() {
-	console.log("Clear!");
-	composer.clearTrack(0);
+function clearTrack(trackNum) {
+	console.log("Clearing Track: "+trackNum+" !");
+	composer.clearTrack(trackNum);
 }
 
 function playMetronome() {

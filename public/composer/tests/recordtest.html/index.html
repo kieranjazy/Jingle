@@ -2,7 +2,8 @@
 <html>
 	<head>
 		<title>Record Test</title>
-		<script type="text/javascript" src="wavetables.js"></script>
+		<script type="text/javascript" src="01_synth_lead.js"></script>
+		<script type="text/javascript" src="sounds.js" charset="utf-8"></script>
 		<script type="text/javascript" src="metronome.js"></script>
 		<script type="text/javascript" src="sequence.js"></script>
 		<script type="text/javascript" src="composer.js"></script>
@@ -13,11 +14,13 @@
 		<script type="text/javascript">
 			document.getElementById("bpmval").value = 60;
 		</script>
-		<button name="Record" value="record" onclick="record();">Record</button>
+		<button name="Record" value="record" onclick="record(0);">Record Track 1</button>
+		<button name="Record" value="record" onclick="record(1);">Record Track 2</button>
 		<button type="button" onclick="play();">Play</button>
 		<button type="button" name="button" onclick="stop();">Stop</button>
 		<button type="button" name="button" onclick="pause();">Pause</button>
-		<button type="button" onclick="clearTrack();">Clear Track</button>
+		<button type="button" onclick="clearTrack(0);">Clear Track 1</button>
+		<button type="button" onclick="clearTrack(1);">Clear Track 2</button>
 		<label for="arp">Arpeggio</label>
 		<input type="checkbox" name="arp" id="arptoggle">
 		<label for="speeds">Alternate every xth of a note </label>
