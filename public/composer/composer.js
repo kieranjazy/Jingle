@@ -4,7 +4,7 @@ let audioctx = new AudioContext();
  * Composer
  * Version 2.1 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 28/04/2021
+ * Last Edited 26/04/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -24,9 +24,8 @@ function Composer() {
 									/*These all follow the form f(x) = (440 * 2^((x-69)/12))/60
 										Where 60 is middle C It's required for the wavetables to work correctly
 										As the Wavetables are all recorded at middle C*/
-	this.table_speeds = [[1.000000,1.059463,1.122462,1.189207,1.259921,1.334840,1.414214,1.498307,1.587401,1.681793,1.781797,1.887749],[0.500000,0.529732,0.561231,0.594604,0.629961,0.667420,0.707107,0.749154,0.793701,0.840896,0.890899,0.943874]];
-	this.table_vols = [[1.000000,0.916667,0.833333,0.750000,0.666667,0.583333,0.500000,0.416667,0.333333,0.250000,0.166667,0.083333],[0.000000,0.083333,0.166667,0.250000,0.333333,0.416667,0.500000,0.583333,0.666667,0.750000,0.833333,0.916667]];
-	this.instrumentBank = [synth_lead,instruments];
+	this.keyfreqs = [0.03125,0.03311,0.03508,0.03717,0.03938,0.04172,0.0442,0.04683,0.04961,0.05256,0.05569,0.059,0.06251,0.06622,0.07016,0.07433,0.07875,0.08344,0.0884,0.09365,0.09922,0.10512,0.11137,0.118,0.12501,0.13245,0.14032,0.14867,0.15751,0.16687,0.17679,0.18731,0.19844,0.21024,0.22275,0.23599,0.25002,0.26489,0.28064,0.29733,0.31501,0.33374,0.35359,0.37461,0.39689,0.42049,0.44549,0.47198,0.50005,0.52978,0.56129,0.59466,0.63002,0.66749,0.70718,0.74923,0.79378,0.84098,0.89099,0.94397,1.0001,1.05957,1.12257,1.18932,1.26004,1.33497,1.41435,1.49845,1.58756,1.68196,1.78197,1.88793,2.0002,2.11913,2.24514,2.37865,2.52009,2.66994,2.8287,2.99691,3.17511,3.36391,3.56394,3.77587,4.00039,4.23827,4.49029,4.75729,5.04018,5.33988,5.65741,5.99381,6.35022,6.72783,7.12789,7.55173,8.00078,8.47653,8.98057,9.51459,10.08035,10.67976,11.31481,11.98763,12.70045,13.45566,14.25577,15.10346,16.00156,16.95307,17.96115,19.02917,20.16071,21.35952,22.62963,23.97526,25.4009,26.91131,28.51155,30.20693,32.00313,33.90613,35.9223,38.05835,40.32141,42.71905,45.25926,47.95051];
+	this.instrumentBank = [wavetable,instruments];
 	this.bps = 1;
 	//Mono by Default for speed
 	this.channels = 1;
@@ -39,7 +38,7 @@ function Composer() {
 	//This is where you send keyboard inputs to avoid blank notes being inputted :)
 	this.keyboardState = [];
 	//This is comprised of dictionaries because it takes up less memory than 512 numbers :)
-	this.keyPositions = [];
+	this.keyPositions = [{},{}];
 	/*Arpeggio Related Info*/
 	this.hasArpeggio = [false,false];
 	this.arpeggioSpeed = [1.0,1.0];
@@ -164,50 +163,8 @@ Composer.prototype.getTrackMuteState = function(track) {
 	return this.isMuted[track];
 }
 
-Composer.prototype.generate_buffer_frequency = function(instrument, key, offset) {
-	//Check if in range
-	let octave = Math.floor(key/12) - 3;
-	let upoctave = octave+1;
-	let iter_value = key%12;
-	let calc_val = 0;
-	if(octave < 0) {
-		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * this.table_speeds[1][iter_value])) % this.instrumentBank[instrument][upoctave].length;
-		let octave_lower_2 = Math.floor(this.keyPositions[instrument][1][key]);
-		let octave_upper_2 = octave_lower_2 + 1;
-		calc_val = this.instrumentBank[instrument][upoctave][octave_lower_2] + ((this.instrumentBank[instrument][upoctave][octave_upper_2] - this.instrumentBank[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
-	} else if(octave > 8) {
-		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * this.table_speeds[0][iter_value])) % this.instrumentBank[instrument][octave].length;
-		let octave_lower_1 = Math.floor(this.keyPositions[instrument][0][key]);
-		let octave_upper_1 = octave_lower_1 + 1;
-		calc_val = this.instrumentBank[instrument][octave][octave_lower_1] + ((this.instrumentBank[instrument][octave][octave_upper_1] - this.instrumentBank[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
-	} else {
-		/* Breakdown:
-			1. Step changes are made for upper and lower wavetable
-			2. Step positions for both tables are determined
-			3. values are obtained from the wave table for the c below and the c above
-			   Along with some code to generate mid-sample values by assuming it's a
-			   straight line, this results in a somewhat broader spectrum of sound,
-			   although it could potentially be a source of audio issues
-			4. the Likeness to either c is then used to mix the two waves together
-			   This hopefully makes it sound good but I don't know yet
-			5. it returns the values and does nothing else
-		*/
-		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * this.table_speeds[0][iter_value])) % this.instrumentBank[instrument][octave].length;
-		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * this.table_speeds[1][iter_value])) % this.instrumentBank[instrument][upoctave].length;
-		let octave_lower_1 = Math.floor(this.keyPositions[instrument][0][key]);
-		let octave_upper_1 = octave_lower_1 + 1;
-		let octave_lower = this.instrumentBank[instrument][octave][octave_lower_1] + ((this.instrumentBank[instrument][octave][octave_upper_1] - this.instrumentBank[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
-		let octave_lower_2 = Math.floor(this.keyPositions[instrument][1][key]);
-		let octave_upper_2 = octave_lower_2 + 1;
-		let octave_upper = this.instrumentBank[instrument][upoctave][octave_lower_2] + ((this.instrumentBank[instrument][upoctave][octave_upper_2] - this.instrumentBank[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
-		calc_val = octave_lower;
-		//Does not perform the end calculations as I want to reuse this for arpeggio
-	}
-	return calc_val;
-};
-
 Composer.prototype.__play = function() {
-	//Pre checks
+	//Safety Checks
 	let temp_val = this.instrumentBank.length;
 	if(this.activeNotes.length<temp_val) {
 		while(this.activeNotes.length < temp_val) {
@@ -216,339 +173,218 @@ Composer.prototype.__play = function() {
 	}
 	if(this.keyPositions.length < temp_val) {
 		while(this.keyPositions.length < temp_val) {
-			console.log("Poop!");
-			this.keyPositions.push([]);
-			this.keyPositions[this.keyPositions.length -1].push({});
-			this.keyPositions[this.keyPositions.length -1].push({});
+			this.keyPositions.push({});
 		}
 	}
-	this.isPlaying = true;
-	this.sequenceLength = this.sequencer.getLength();
-	/* (44100 * bps/32) */
 	let frameSize = Math.floor(audioctx.sampleRate * this.bps * 0.03125);
+	this.sequenceLength = this.sequencer.getLength() + 1;
 	let totalFrames = this.sequenceLength - this.sequencePosition;
 	let totalBufferSize = frameSize * totalFrames;
-	console.log("Frame Size: "+frameSize+" Number of Frames: "+totalFrames+" Total Buffer Size: "+totalBufferSize);
-	if(totalFrames == 0) {
-		console.log("Nothing Passed!, nothing to play.");
+	console.log(totalFrames + " " + totalBufferSize + " " + frameSize);
+	if(totalBufferSize == 0 || isNaN(totalBufferSize)) {
+		console.log("Buffer is empty: Nothing to Play!");
 		return;
 	}
+	//Basically in order to mitigate this sounding crap, I have to now make audio streams for every instrument and perform a mixing operation at the very end :)
+	let instrument_streams = [];
+	let isUpdated = [];
+	for(let i = 0; i < this.instrumentBank.length; i++) {
+		let instrument_stream = new Array(totalBufferSize).fill(0);
+		instrument_streams.push(instrument_stream);
+		isUpdated.push(false);
+	}
+	//I Really hope this works because if it doesn't I'm all out of ideas
+
+	//Processing time :)
+	let framePosition = 0;
+	let step = this.sequencePosition;
+	for(;step < this.sequenceLength; step++) {
+		let tempNotes = this.sequencer.getData(step);
+		for(let i = 0; i < tempNotes.length; i++) {
+			if(tempNotes[i].indexOf(' ') != -1 || this.isMuted[tempNotes[i][0]]) {
+				continue;
+			}
+			/*
+				Each item in the tempNotes array follows the following scheme
+				[instrument_number, note, flag]
+				instrument_number denotes the index in which the data for the instrument lies
+				note is in the range 0 - 127
+				flag has two possible values:
+				1 - On
+				0 - Off
+			*/
+			//Quick Safety Check
+			if(tempNotes[i][0] >= this.instrumentBank.length) {
+				console.log("This instrument is not defined: " + tempNotes[i][0]);
+				continue;
+			}
+			if(tempNotes[i][2] == 1) {
+				if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
+					/*Wavetable Synth*/
+					if(tempNotes[i][1] < 24 || tempNotes[i][1] > 127) {
+						//Unplayable notes - They are not added to the activeNotes list
+						continue;
+					}
+					if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
+						//Note isn't already Playing
+						//Input notes in order for the arpeggiator so it sounds decent
+						if(this.activeNotes[tempNotes[i][0]].length == 0) {
+							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+						} else {
+							let j = 0;
+							let wasadded = false;
+							while(j < this.activeNotes[tempNotes[i][0]].length) {
+								if(this.activeNotes[tempNotes[i][0]][j] > tempNotes[i][1]) {
+									this.activeNotes[tempNotes[i][0]].splice(j,0,tempNotes[i][1]);
+									wasadded = true;
+									break;
+								}
+								j++;
+							}
+							if(!wasadded) this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
+						}
+					}
+					//Need to record two key Positions at any time so the new wavetable system can work correctly
+					this.keyPositions[tempNotes[i][0]][tempNotes[i][1]] = 0;
+				} else {
+					//Drum Specific stuff
+					let note = tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length;
+					if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length) == -1) {
+						this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length);
+					}
+					this.keyPositions[tempNotes[i][0]][note] = 0;
+				}
+			} else {
+				//Note Off
+				//Drums Are Triggered not Gated
+				if(this.loadedInstruments[tempNotes[i][0]].type !== 0) {
+					continue;
+				}
+				let position = this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]);
+				//Check if it's in the instrument, this is to deal with fragments if they do happen to exist
+				if(position != -1) {
+					this.activeNotes[tempNotes[i][0]].splice(position,1);
+				}
+			}
+		}
+		let notesPerInstrument = [];
+		for(let i = 0; i < this.activeNotes.length; i++) {
+			notesPerInstrument.push(this.activeNotes[i].length);
+		}
+		let ended_instruments = 0;
+		for(let i = 0; i < frameSize; i++) {
+			ended_instruments = 0;
+			for(let j = 0; j < this.activeNotes.length;j++) {
+				if(this.activeNotes[j].length == 0) {
+					continue;
+				}
+				isUpdated[j] = true;
+				if(this.loadedInstruments[j]["type"] === 0) {
+					//Wavetables
+					let note = 0;
+					if(this.hasArpeggio[j] || notesPerInstrument[j] == 0) {
+						this.arpeggioPosition[j] %= notesPerInstrument[j];
+						let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
+						this.keyPositions[j][note] = (this.keyPositions[j][note] + this.keyfreqs[note]) % this.instrumentBank[j].length;
+						let lower = Math.floor(this.keyPositions[j][note]);
+						let upper = Math.floor(this.keyPositions[j][note] + 1) % this.instrumentBank[j].length;
+						instrument_streams[j][framePosition + i] = Math.min(Math.max(this.instrumentVolumes[j] * ( (this.instrumentBank[j][lower] + ((this.instrumentBank[j][upper] - this.instrumentBank[j][lower]) * (this.keyPositions[j][note]%1)))),-1),1);
+					} else {
+						for(let k = 0; k<notesPerInstrument[j]; k++) {
+							let note = this.activeNotes[j][k];
+							this.keyPositions[j][note] = (this.keyPositions[j][note] + this.keyfreqs[note]) % this.instrumentBank[j].length;
+							let lower = Math.floor(this.keyPositions[j][note]);
+							let upper = Math.floor(this.keyPositions[j][note] + 1) % this.instrumentBank[j].length;
+							instrument_streams[j][framePosition + i] = Math.min(Math.max(this.instrumentVolumes[j] * ( (this.instrumentBank[j][lower] + ((this.instrumentBank[j][upper] - this.instrumentBank[j][lower]) * (this.keyPositions[j][note]%1)))),-1),1);
+						}
+						instrument_streams[framePosition + i]/=notesPerInstrument[j];
+					}
+				} else {
+					//Drum Machine
+					let dead_instruments = [];
+					for(let k = 0; k < notesPerInstrument[j]; k++) {
+						let note = this.activeNotes[j][k];
+						this.keyPositions[j][note]++;
+						instrument_streams[j][framePosition + i] = Math.min(Math.max(this.instrumentVolumes[j] * this.instrumentBank[j][note][this.keyPositions[j][note]],-1),1);
+						if(this.keyPositions[j][note] == (this.instrumentBank[j][note].length - 1)) {
+							ended_instruments++;
+							dead_instruments.push(note);
+						}
+					}
+					//Purge dead instruments, This is performed for drumkits as they are triggered rather than gated.
+					//It also guarantees that it doesn't sound like complete muck to the listener
+					if(ended_instruments > 0) {
+						for(let k = 0; k < dead_instruments.length; k++) {
+							this.activeNotes[j].splice(this.activeNotes[j].indexOf(dead_instruments[k]),1);
+							notesPerInstrument[j]--;
+						}
+					}
+				}
+			}
+		}
+		for(let i = 0; i < this.arpeggioPosition.length; i++) {
+			if(this.activeNotes[i].length == NaN || this.activeNotes[i].length == 0) {
+				continue;
+			}
+			this.arpeggioPosition[i] = (this.arpeggioPosition[i] + this.arpeggioSpeed[i]) % this.activeNotes[i].length;
+		}
+		framePosition+=frameSize;
+	}
+	//Unlike Before, I must perform a summation operation at the end and then divide them the total to perform passive mixing :)
+	let totalInstrumentVolume = 0;
+	for(let j = 0; j < this.instrumentBank.length; j++) {
+		if(isUpdated[j]) {
+			totalInstrumentVolume += this.instrumentVolumes[j];
+		}
+	}
+	console.log(instrument_streams);
 	let myArrayBuffer = audioctx.createBuffer(this.channels,totalBufferSize,audioctx.sampleRate);
 	if(this.channels == 1) {
-		//Mono Code
+		//Mono
 		let nowBuffering = myArrayBuffer.getChannelData(0);
-		let framePosition = 0;
-		for(let step = this.sequencePosition; step < this.sequenceLength; step++) {
-			//Step 1: Loading in Step Data
-			let tempNotes = this.sequencer.getData(step);
-			for(let i = 0; i < tempNotes.length; i++) {
-				if(tempNotes[i].indexOf('')!= -1 || this.isMuted[tempNotes[i][0]]) {
-					continue;
+		for(let i = 0; i < totalBufferSize; i++) {
+			if(totalInstrumentVolume==0) {
+				while(i<totalBufferSize) {
+					nowBuffering[i] = 0;
+					i++;
 				}
-				/*
-					Each item in the tempNotes array follows the following scheme
-					[instrument_number, note, flag]
-					instrument_number denotes the index in which the data for the instrument lies
-					note is in the range 0 - 127
-					flag has two possible values:
-					1 - On
-					0 - Off
-					*/
-					//Quick Safety Check
-				if(tempNotes[i][0] >= this.instrumentBank.length) {
-					console.log("This instrument is not defined: " + tempNotes[i][0]);
-					continue;
-				}
-					/* Note on*/
-				if(tempNotes[i][2] == 1) {
-					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
-						/*Wavetable Synth*/
-						if(tempNotes[i][1] < 24 || tempNotes[i][1] > 127) {
-							//Unplayable notes - They are not added to the activeNotes list
-							continue;
-						}
-						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
-							//Note isn't already Playing
-							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
-						}
-						//Need to record two key Positions at any time so the new wavetable system can work correctly
-						this.keyPositions[tempNotes[i][0]][0][tempNotes[i][1]] = 0;
-						this.keyPositions[tempNotes[i][0]][1][tempNotes[i][1]] = 0;
-					} else {
-						//Drum Specific stuff
-						let note = tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length;
-						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length) == -1) {
-							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length);
-						}
-						this.keyPositions[tempNotes[i][0]][0][note] = 0;
-					}
-				} else {
-					//Note Off
-					//Drums Are Triggered not Gated
-					if(this.loadedInstruments[tempNotes[i][0]].type !== 0) {
-						continue;
-					}
-					let position = this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]);
-					//Check if it's in the instrument, this is to deal with fragments if they do happen to exist
-					if(position != -1) {
-						this.activeNotes[tempNotes[i][0]].splice(position,1);
-					}
-				}
+				break;
 			}
-			//This is needed to do calculations later
-			let totalNotes = 0;
-			for(let i = 0; i < this.activeNotes.length; i++) {
-				totalNotes += this.activeNotes[i].length;
+			for(let j = 0; j < this.instrumentBank.length; j++) {
+				nowBuffering[i]+=this.masterVolume * instrument_streams[j][i];
 			}
-			//Step 2: Buffer Loading
-			if(totalNotes > 0) {
-				let ended_instruments = 0;
-				let i = 0;
-				for(; i<frameSize; i+= totalNotes) {
-					let offset = 0;
-					totalNotes-=ended_instruments;
-					if(totalNotes<=0) {
-						console.log("Ended instrument break!");
-						break;
-					}
-					ended_instruments = 0;
-					for(let j = 0; j < this.activeNotes.length; j++) {
-						if(this.activeNotes[j].length == 0) {
-							//Skip if there's nothing to do
-							continue;
-						}
-						if(this.loadedInstruments[j].type == 0) {
-							//Wavetable
-							//Check for Arpeggiator
-							if(this.hasArpeggio[j] && this.activeNotes[j].length > 1) {
-								//In case it's out of bounds
-								this.arpeggioPosition[j] %= this.activeNotes[j].length;
-								//Get note to save some array accesses
-								let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
-								//Compared to the previous version, it uses a method rather than writing the exact same code a heap of times more than I have to
-								let temp_val = this.generate_buffer_frequency(j,note,offset);
-								nowBuffering[framePosition + i + offset] =  Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
-								offset++;
-								for(let k = 1; k < this.activeNotes[j].length; k++) {
-									temp_val = this.generate_buffer_frequency(j,note,1);
-									Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
-									offset++;
-								}
-								let octave = Math.floor(note/12)-3;
-								if(octave > 0) {
-									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * this.table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
-								}
-								octave += 1;
-								if(octave < 9) {
-									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * this.table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
-								}
-							} else {
-								//No Arpeggiator
-								for(let k = 0; k < this.activeNotes[j].length; k++) {
-									nowBuffering[framePosition + i + offset] = this.generate_buffer_frequency(j,this.activeNotes[j][k],offset);
-									let note = this.activeNotes[j][k];
-									let octave = Math.floor(this.activeNotes[j][k]/12) - 3;
-									if(octave > -1) {
-										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * this.table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
-									}
-									octave++;
-									if(octave < 9) {
-										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * this.table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
-									}
-									offset++;
-								}
-							}
-						} else {
-							//Drum Kit (and Vox if there's time :) )
-							/*Drum design Specification*/
-							/*Drums are typically Triggered and the sample runs to the end
-							Hopefully this sounds good, I might regret writing this lol
-							*/
-							/*Basically so it doesn't make shit of the whole thing I have it so the instruments are removed at the end of their cycle :)
-							After all other drum sounds have been rendered though!!
-							Drum Spec
-							Drum sounds are stored in a 2d array rather than a 1d array but both go into instrumentBank for convenience :)
-							*/
-							let dead_instruments = [];
-							for(let k = 0; k < this.activeNotes[j].length; k++) {
-								this.keyPositions[j][0][this.activeNotes[j][k]] += offset;
-								nowBuffering[framePosition + i + offset] = Math.min(Math.max((this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][this.activeNotes[j][k]][this.keyPositions[j][0][this.activeNotes[j][k]]]),-1),1);
-								this.keyPositions[j][0][this.activeNotes[j][k]] += (totalNotes - offset);
-								if(this.keyPositions[j][0][this.activeNotes[j][k]] > this.instrumentBank[j][this.activeNotes[j][k]].length) {
-									console.log("Dead Instrument");
-									dead_instruments.push(this.activeNotes[j][k]);
-									ended_instruments++;
-								}
-							}
-								//Purge dead instruments, This is performed for drumkits as they are triggered rather than gated.
-								//It also guarantees that it doesn't sound like complete muck to the listener
-							if (ended_instruments > 0) {
-								for(let k = 0; k < dead_instruments.length; k++) {
-									this.activeNotes[j].splice(this.activeNotes[j].indexOf(dead_instruments[k]),1);
-								}
-							}
-						}
-					}
-				}
-				//Fill empty buffer positions left from dead instruments
-				if(i < frameSize) {
-					while(i < frameSize) {
-						nowBuffering[framePosition + i] = 0;
-						i++;
-					}
-				}
-			} else {
-				for(let i = 0; i < frameSize; i++) {
-					nowBuffering[framePosition+i] = 0;
-				}
-			}
-			framePosition += frameSize;
+			nowBuffering[i]/=totalInstrumentVolume;
 		}
 	} else {
-		//Stereo
+		//Mono
 		let left = myArrayBuffer.getChannelData(0);
-		let right = myArrayBuffer.getChannelData(1);
-		let framePosition = 0;
-		for(let step = this.sequencePosition; step < this.sequenceLength; step++) {
-			let tempNotes = this.sequencer.getData(step);
-			for(let i = 0; i < tempNotes.length; i++) {
-				if(tempNotes[i].indexOf('')!= -1 || this.isMuted[tempNotes[i][0]]) {
-					continue;
+		let right = myArrayBuffer.getChannelData(0);
+		for(let i = 0; i < totalBufferSize; i++) {
+			//check if instrument is Playing in frame and then do the lovely calculations
+			if(totalInstrumentVolume==0) {
+				while(i < totalBufferSize) {
+					left[i] = 0;
+					right[i] = 0;
+					i++;
 				}
-				if(tempNotes[i][0] >= this.instrumentBank.length) {
-					console.log("This instrument is not defined: " + tempNotes[i][0]);
-					continue;
-				}
-				if(tempNotes[i][2] == 1) {
-					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
-						if(tempNotes[i][1] < 24 || tempNotes[i][1] > 127) {
-							continue;
-						}
-						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
-							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1]);
-						}
-						this.keyPositions[tempNotes[i][0]][0][tempNotes[i][1]] = 0;
-						this.keyPositions[tempNotes[i][0]][1][tempNotes[i][1]] = 0;
-					} else {
-						let note = tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length;
-						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length) == -1) {
-							this.activeNotes[tempNotes[i][0]].push(tempNotes[i][1] % this.instrumentBank[tempNotes[i][0]].length);
-						}
-						this.keyPositions[tempNotes[i][0]][0][note] = 0;
-					}
-				} else {
-					if(this.loadedInstruments[tempNotes[i][0]].type !== 0) {
-						continue;
-					}
-					let position = this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]);
-					if(position != -1) {
-						this.activeNotes[tempNotes[i][0]].splice(position,1);
-					}
-				}
+				break;
 			}
-			let totalNotes = 0;
-			for(let i = 0; i < this.activeNotes.length; i++) {
-				totalNotes += this.activeNotes[i].length;
+			for(let j = 0; j < this.instrumentBank.length; j++) {
+				left[i]+=this.masterVolume * this.trackVolumes[j][0] * instrument_streams[j][i];
+				right[i] += this.masterVolume * this.trackVolumes[j][1] * instrument_streams[j][i];
 			}
-			if(totalNotes > 0) {
-				let ended_instruments = 0;
-				let i = 0;
-				for(; i<frameSize; i+= totalNotes) {
-					let offset = 0;
-					totalNotes-=ended_instruments;
-					if(totalNotes<=0) {
-						console.log("Ended instrument break!");
-						break;
-					}
-					ended_instruments = 0;
-					for(let j = 0; j < this.activeNotes.length; j++) {
-						if(this.activeNotes[j].length == 0) {
-							continue;
-						}
-						if(this.loadedInstruments[j].type == 0) {
-							if(this.hasArpeggio[j] && this.activeNotes[j].length > 1) {
-								this.arpeggioPosition[j] %= this.activeNotes[j].length;
-								let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
-								let temp_val = this.generate_buffer_frequency(j,note,offset);
-								temp_val =  Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
-								left[framePosition+i+offset] = temp_val * this.trackVolumes[j][0];
-								right[framePosition+i+offset] = temp_val * this.trackVolumes[j][1];
-								offset++;
-								for(let k = 1; k < this.activeNotes[j].length; k++) {
-									temp_val = this.generate_buffer_frequency(j,note,1);
-									Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
-									offset++;
-								}
-								let octave = Math.floor(note/12)-3;
-								if(octave > 0) {
-									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
-								}
-								octave += 1;
-								if(octave < 9) {
-									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
-								}
-							} else {
-								for(let k = 0; k < this.activeNotes[j].length; k++) {
-									let temp = this.generate_buffer_frequency(j,this.activeNotes[j][k],offset);
-									left[framePosition + i + offset] = this.trackVolumes[j][0] * temp;
-									right[framePosition+i+offset]=this.trackVolumes[j][1] * temp;
-									let note = this.activeNotes[j][k];
-									let octave = Math.floor(this.activeNotes[j][k]/12) - 3;
-									if(octave > -1) {
-										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
-									}
-									octave++;
-									if(octave < 9) {
-										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
-									}
-									offset++;
-								}
-							}
-						} else {
-							let dead_instruments = [];
-							for(let k = 0; k < this.activeNotes[j].length; k++) {
-								this.keyPositions[j][0][this.activeNotes[j][k]] += offset;
-								let temp = Math.min(Math.max((this.instrumentVolumes[j] * this.masterVolume * this.instrumentBank[j][this.activeNotes[j][k]][this.keyPositions[j][0][this.activeNotes[j][k]]]),-1),1);
-								left[framePosition + i + offset] = this.trackVolumes[j][0] * temp;
-								right[framePosition + i + offset] = this.trackVolumes[j][1] * temp;
-								this.keyPositions[j][0][this.activeNotes[j][k]] += (totalNotes - offset);
-								if(this.keyPositions[j][0][this.activeNotes[j][k]] > this.instrumentBank[j][this.activeNotes[j][k]].length) {
-									console.log("Dead Instrument");
-									dead_instruments.push(this.activeNotes[j][k]);
-									ended_instruments++;
-								}
-							}
-							if (ended_instruments > 0) {
-								for(let k = 0; k < dead_instruments.length; k++) {
-									this.activeNotes[j].splice(this.activeNotes[j].indexOf(dead_instruments[k]),1);
-								}
-							}
-						}
-					}
-				}
-				if(i < frameSize) {
-					while(i < frameSize) {
-						left[framePosition + i] = 0;
-						right[framePosition + i] = 0;
-						i++;
-					}
-				}
-			} else {
-				for(let i = 0; i < frameSize; i++) {
-					left[framePosition+i] = 0;
-					right[framePosition+i] = 0;
-				}
-			}
-			framePosition+=frameSize;
+			left[i]/=totalInstrumentVolume;
+			right[i]/=totalInstrumentVolume;
 		}
 	}
 	console.log("Playing!");
+	this.isPlaying = true;
 	let source = audioctx.createBufferSource();
 	source.buffer = myArrayBuffer;
 	source.connect(audioctx.destination);
 	source.start();
 	source.onended = () => {this.stop()};
-};
+}
 
 Composer.prototype.play = function() {
 	if(!this.isPlaying) {
@@ -652,7 +488,7 @@ Composer.prototype.record = async function(trackNum) {
 		this.numTracks = trackNum;
 	}
 	if(!this.metronomePlaying) {
-		//Play four beeps of a metronome at the pace of the song before input
+		//Play four beeps of a metro			//Add Arpeggio incrementsnome at the pace of the song before input
 		let frameCount = 4 * Math.floor(audioctx.sampleRate * this.bps);
 		let myArrayBuffer = audioctx.createBuffer(this.channels,frameCount,audioctx.sampleRate);
 		for(let channel = 0; channel < this.channels; channel++) {

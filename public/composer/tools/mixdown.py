@@ -121,7 +121,7 @@ def dumpwavetable(filename, data):
     outputfile = open(filename, "w")
     outputfile.write("[")
     for i in range(len(data)):
-        outputfile.write("%.4f" % (data[i]))
+        outputfile.write("%.6f" % (data[i]))
         if(i != len(data) - 1):
             outputfile.write(",")
     outputfile.write("]")
