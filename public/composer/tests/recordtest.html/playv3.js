@@ -9,15 +9,15 @@ Composer.prototype.generate_buffer_frequency = function(instrument, key, offset)
 	let iter_value = key%12;
 	let calc_val = 0;
 	if(octave < 0) {
-		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * table_speeds[1][iter_value])) % wavetable[instrument][upoctave].length;
+		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * this.table_speeds[1][iter_value])) % this.instrumentBank[instrument][upoctave].length;
 		let octave_lower_2 = Math.floor(this.keyPositions[instrument][1][key]);
 		let octave_upper_2 = octave_lower_2 + 1;
-		calc_val = wavetable[instrument][upoctave][octave_lower_2] + ((wavetable[instrument][upoctave][octave_upper_2] - wavetable[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
+		calc_val = this.instrumentBank[instrument][upoctave][octave_lower_2] + ((this.instrumentBank[instrument][upoctave][octave_upper_2] - this.instrumentBank[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
 	} else if(octave > 8) {
-		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * table_speeds[0][iter_value])) % wavetable[instrument][octave].length;
+		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * this.table_speeds[0][iter_value])) % this.instrumentBank[instrument][octave].length;
 		let octave_lower_1 = Math.floor(this.keyPositions[instrument][0][key]);
 		let octave_upper_1 = octave_lower_1 + 1;
-		calc_val = wavetable[instrument][octave][octave_lower_1] + ((wavetable[instrument][octave][octave_upper_1] - wavetable[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
+		calc_val = this.instrumentBank[instrument][octave][octave_lower_1] + ((this.instrumentBank[instrument][octave][octave_upper_1] - this.instrumentBank[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
 	} else {
 		/* Breakdown:
 			1. Step changes are made for upper and lower wavetable
@@ -30,15 +30,15 @@ Composer.prototype.generate_buffer_frequency = function(instrument, key, offset)
 			   This hopefully makes it sound good but I don't know yet
 			5. it returns the values and does nothing else
 		*/
-		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * table_speeds[0][iter_value])) % wavetable[instrument][octave].length;
-		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * table_speeds[1][iter_value])) % wavetable[instrument][upoctave].length;
+		this.keyPositions[instrument][0][key] = (this.keyPositions[instrument][0][key] + (offset * this.table_speeds[0][iter_value])) % this.instrumentBank[instrument][octave].length;
+		this.keyPositions[instrument][1][key] = (this.keyPositions[instrument][1][key] + (offset * this.table_speeds[1][iter_value])) % this.instrumentBank[instrument][upoctave].length;
 		let octave_lower_1 = Math.floor(this.keyPositions[instrument][0][key]);
 		let octave_upper_1 = octave_lower_1 + 1;
-		let octave_lower = wavetable[instrument][octave][octave_lower_1] + ((wavetable[instrument][octave][octave_upper_1] - wavetable[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
+		let octave_lower = this.instrumentBank[instrument][octave][octave_lower_1] + ((this.instrumentBank[instrument][octave][octave_upper_1] - this.instrumentBank[instrument][octave][octave_lower_1]) * this.keyPositions[instrument][0][key] % 1);
 		let octave_lower_2 = Math.floor(this.keyPositions[instrument][1][key]);
 		let octave_upper_2 = octave_lower_2 + 1;
-		let octave_upper = wavetable[instrument][upoctave][octave_lower_2] + ((wavetable[instrument][upoctave][octave_upper_2] - wavetable[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
-		calc_val = (octave_lower * table_vols[0][iter_value]) + (octave_upper * table_vols[1][iter_value]);
+		let octave_upper = this.instrumentBank[instrument][upoctave][octave_lower_2] + ((this.instrumentBank[instrument][upoctave][octave_upper_2] - this.instrumentBank[instrument][upoctave][octave_lower_2]) * this.keyPositions[instrument][1][key] % 1);
+		calc_val = octave_lower;
 		//Does not perform the end calculations as I want to reuse this for arpeggio
 	}
 	return calc_val;
@@ -54,7 +54,9 @@ Composer.prototype.__play = function() {
 	}
 	if(this.keyPositions.length < temp_val) {
 		while(this.keyPositions.length < temp_val) {
-			this.keyPositions.push([{},{}]);
+			this.keyPositions.push([]);
+			this.keyPositions[this.keyPositions.length -1].push({});
+			this.keyPositions[this.keyPositions.length -1].push({});
 		}
 	}
 	this.isPlaying = true;
@@ -98,7 +100,7 @@ Composer.prototype.__play = function() {
 				if(tempNotes[i][2] == 1) {
 					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
 						/*Wavetable Synth*/
-						if(key < 24 || key > 127) {
+						if(tempNotes[i][1] < 24 || tempNotes[i][1] > 127) {
 							//Unplayable notes - They are not added to the activeNotes list
 							continue;
 						}
@@ -162,20 +164,20 @@ Composer.prototype.__play = function() {
 								let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
 								//Compared to the previous version, it uses a method rather than writing the exact same code a heap of times more than I have to
 								let temp_val = this.generate_buffer_frequency(j,note,offset);
-								nowBuffering[temp + i + offset] =  Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
+								nowBuffering[framePosition + i + offset] =  Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
 								offset++;
 								for(let k = 1; k < this.activeNotes[j].length; k++) {
 									temp_val = this.generate_buffer_frequency(j,note,1);
-									Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
+									nowBuffering[framePosition+i+offset] = Math.min(Math.max(this.masterVolume * this.instrumentVolumes[j] * temp_val,-1),1);
 									offset++;
 								}
 								let octave = Math.floor(note/12)-3;
 								if(octave > 0) {
-									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * table_speeds[0][note%12])%this.instrumentBank[j][octave].length;
+									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * this.table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
 								}
 								octave += 1;
 								if(octave < 9) {
-									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * table_speeds[1][note%12])%this.instrumentBank[j][octave].length;
+									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * this.table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
 								}
 							} else {
 								//No Arpeggiator
@@ -184,11 +186,11 @@ Composer.prototype.__play = function() {
 									let note = this.activeNotes[j][k];
 									let octave = Math.floor(this.activeNotes[j][k]/12) - 3;
 									if(octave > -1) {
-										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * table_speeds[0][note%12])%this.instrumentBank[j][octave].length;
+										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * this.table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
 									}
 									octave++;
 									if(octave < 9) {
-										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * table_speeds[1][note%12])%this.instrumentBank[j][octave].length;
+										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * this.table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
 									}
 									offset++;
 								}
@@ -256,7 +258,7 @@ Composer.prototype.__play = function() {
 				}
 				if(tempNotes[i][2] == 1) {
 					if(this.loadedInstruments[tempNotes[i][0]].type === 0) {
-						if(key < 24 || key > 127) {
+						if(tempNotes[i][1] < 24 || tempNotes[i][1] > 127) {
 							continue;
 						}
 						if(this.activeNotes[tempNotes[i][0]].indexOf(tempNotes[i][1]) == -1) {
@@ -316,11 +318,11 @@ Composer.prototype.__play = function() {
 								}
 								let octave = Math.floor(note/12)-3;
 								if(octave > 0) {
-									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * table_speeds[0][note%12])%this.instrumentBank[j][octave].length;
+									this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset - 1)) * table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
 								}
 								octave += 1;
 								if(octave < 9) {
-									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * table_speeds[1][note%12])%this.instrumentBank[j][octave].length;
+									this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset - 1)) * table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
 								}
 							} else {
 								for(let k = 0; k < this.activeNotes[j].length; k++) {
@@ -330,11 +332,11 @@ Composer.prototype.__play = function() {
 									let note = this.activeNotes[j][k];
 									let octave = Math.floor(this.activeNotes[j][k]/12) - 3;
 									if(octave > -1) {
-										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * table_speeds[0][note%12])%this.instrumentBank[j][octave].length;
+										this.keyPositions[j][0][note] = (this.keyPositions[j][0][note] + ((totalNotes - (offset)) * table_speeds[0][note%12]))%this.instrumentBank[j][octave].length;
 									}
 									octave++;
 									if(octave < 9) {
-										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * table_speeds[1][note%12])%this.instrumentBank[j][octave].length;
+										this.keyPositions[j][1][note] = (this.keyPositions[j][1][note] + ((totalNotes - (offset)) * table_speeds[1][note%12]))%this.instrumentBank[j][octave].length;
 									}
 									offset++;
 								}
