@@ -181,6 +181,7 @@ Composer.prototype.__play = function() {
 	let totalFrames = this.sequenceLength - this.sequencePosition;
 	let totalBufferSize = frameSize * totalFrames;
 	console.log(totalFrames + " " + totalBufferSize + " " + frameSize);
+
 	if(totalBufferSize == 0 || isNaN(totalBufferSize)) {
 		console.log("Buffer is empty: Nothing to Play!");
 		return;
@@ -266,7 +267,7 @@ Composer.prototype.__play = function() {
 					this.activeNotes[tempNotes[i][0]].splice(position,1);
 				}
 			}
-		}
+    }
 		let notesPerInstrument = [];
 		for(let i = 0; i < this.activeNotes.length; i++) {
 			notesPerInstrument.push(this.activeNotes[i].length);
