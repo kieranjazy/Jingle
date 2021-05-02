@@ -4,7 +4,7 @@ let audioctx = new AudioContext();
  * Composer
  * Version 2.1 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 26/04/2021
+ * Last Edited 2/05/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -163,7 +163,7 @@ Composer.prototype.getTrackMuteState = function(track) {
 	return this.isMuted[track];
 }
 
-Composer.prototype.__play = function() {
+Composer.prototype.generateAudioData = function(totalBufferSize,frameSize) {
 	//Safety Checks
 	let temp_val = this.instrumentBank.length;
 	if(this.activeNotes.length<temp_val) {
@@ -176,16 +176,7 @@ Composer.prototype.__play = function() {
 			this.keyPositions.push({});
 		}
 	}
-	let frameSize = Math.floor(audioctx.sampleRate * this.bps * 0.03125);
-	this.sequenceLength = this.sequencer.getLength() + 1;
-	let totalFrames = this.sequenceLength - this.sequencePosition;
-	let totalBufferSize = frameSize * totalFrames;
-	console.log(totalFrames + " " + totalBufferSize + " " + frameSize);
-
-	if(totalBufferSize == 0 || isNaN(totalBufferSize)) {
-		console.log("Buffer is empty: Nothing to Play!");
-		return;
-	}
+	//Had to separate this from the Play method in order to streamline the MP3 renderer
 	//Basically in order to mitigate this sounding crap, I have to now make audio streams for every instrument and perform a mixing operation at the very end :)
 	let instrument_streams = [];
 	let isUpdated = [];
@@ -267,7 +258,7 @@ Composer.prototype.__play = function() {
 					this.activeNotes[tempNotes[i][0]].splice(position,1);
 				}
 			}
-    }
+		}
 		let notesPerInstrument = [];
 		for(let i = 0; i < this.activeNotes.length; i++) {
 			notesPerInstrument.push(this.activeNotes[i].length);
@@ -331,14 +322,30 @@ Composer.prototype.__play = function() {
 		}
 		framePosition+=frameSize;
 	}
+	return {audiodata:instrument_streams,isUpdated:isUpdated};
+}
+
+Composer.prototype.__play = function() {
+	let frameSize = Math.floor(audioctx.sampleRate * this.bps * 0.03125);
+	this.sequenceLength = this.sequencer.getLength();
+	let totalFrames = this.sequenceLength - this.sequencePosition;
+	let totalBufferSize = frameSize * totalFrames;
+	console.log(totalFrames + " " + totalBufferSize + " " + frameSize);
+	if(totalBufferSize == 0 || isNaN(totalBufferSize)) {
+		console.log("Buffer is empty: Nothing to Play!");
+		return;
+	}
+
 	//Unlike Before, I must perform a summation operation at the end and then divide them the total to perform passive mixing :)
+	let audiodata = this.generateAudioData(totalBufferSize,frameSize);
+	let instrument_streams = audiodata.audiodata;
+	let isUpdated = audiodata.isUpdated;
 	let totalInstrumentVolume = 0;
 	for(let j = 0; j < this.instrumentBank.length; j++) {
 		if(isUpdated[j]) {
 			totalInstrumentVolume += this.instrumentVolumes[j];
 		}
 	}
-	console.log(instrument_streams);
 	let myArrayBuffer = audioctx.createBuffer(this.channels,totalBufferSize,audioctx.sampleRate);
 	if(this.channels == 1) {
 		//Mono
@@ -572,6 +579,93 @@ Composer.prototype.loadData = function(saveData) {
 Composer.prototype.renderMp3 = function() {
 	// TODO: this
 	/*This will use lamejs https://github.com/zhuker/lamejs*/
+	console.log("Rendering Mp3");
+	this.sequencePosition = 0;
+	let totalFrames = this.sequencer.getLength();
+	let frameLength = Math.floor(44100 * 0.03125 * this.bps);
+	let totalBufferSize = totalFrames * frameLength;
+	let returnData = this.generateAudioData(totalBufferSize,frameLength);
+	//Encode at 320 for highest quality Mp3
+	let mp3Encoder = new lamejs.Mp3Encoder(this.channels,44100,320);
+	let totalInstrumentVolume = 0;
+	let isUpdated = returnData.isUpdated;
+	let instrument_streams = returnData.audiodata;
+	for(let i = 0; i < this.instrumentBank.length; i++) {
+		if(isUpdated[i]) totalInstrumentVolume++;
+	}
+	let mp3Data = [];
+	if(this.channels == 1) {
+		//Mono
+		console.log("Generating Mono Track");
+		let samples = new Int16Array(totalBufferSize);
+		for(let i = 0; i < instrument_streams[0].length; i++) {
+			let temp = 0;
+			for(let j = 0; j < instrument_streams.length; j++) {
+				temp+=instrument_streams[j][i];
+			}
+			temp /= totalInstrumentVolume;
+			if(temp < 0) {
+				temp = Math.floor(temp * 0x8000);
+			} else {
+				temp = Math.floor(temp * 0xFFFF);
+			}
+			samples[i] = temp;
+		}
+		for(let i = 0; i < samples.length; i+=576) {
+			let sampleChunk = samples.subarray(i, i+576);
+			let mp3buf = mp3Encoder.encodeBuffer(sampleChunk);
+			if(mp3buf.length > 0) {
+				mp3Data.push(mp3buf);
+			}
+		}
+		let mp3buf = mp3Encoder.flush();
+		if(mp3buf.length > 0) {
+			mp3Data.push(new Int8Array(mp3buf));
+		}
+	} else {
+		//Stereo
+		console.log("Generating Stereo Track");
+		let left = new Int16Array(totalBufferSize);
+		let right = new Int16Array(totalBufferSize);
+		for(let i = 0; i < instrument_streams[0].length; i++) {
+			let templeft = 0;
+			let tempright = 0;
+			for(let j = 0; j < instrument_streams.length; j++) {
+				templeft+=instrument_streams[j][i] * this.trackVolumes[j][0];
+				tempright+=instrument_streams[j][i] * this.trackVolumes[j][1];
+			}
+			templeft /= totalInstrumentVolume;
+			tempright /= totalInstrumentVolume;
+			if(templeft < 0) {
+				templeft = Math.floor(templeft * 0x8000);
+			} else {
+				templeft = Math.floor(templeft * 0xFFFF);
+			}
+			if(tempright < 0) {
+				tempright = Math.floor(tempright * 0x8000);
+			} else {
+				tempright = Math.floor(tempright * 0xFFFF);
+			}
+			left[i] = templeft;
+			right[i] = tempright;
+		}
+		for(let i = 0; i < samples.length; i+=576) {
+			let leftChunk = left.subarray(i, i+576);
+			let rightChunk = right.subarray(i,i+576);
+			let mp3buf = mp3Encoder.encodeBuffer(leftChunk,rightChunk);
+			if(mp3buf.length > 0) {
+				mp3Data.push(mp3buf);
+			}
+		}
+		let mp3buf = mp3Encoder.flush();
+		if(mp3buf.length > 0) {
+			mp3Data.push(new Int8Array(mp3buf));
+		}
+	}
+	var blob = new Blob(mp3Data, {type: 'audio/mp3'});
+	var url = window.URL.createObjectURL(blob);
+	console.log('Success! MP3 URl: ', url);
+	window.open(url);
 };
 
 Composer.prototype.loadTestData = function() {
