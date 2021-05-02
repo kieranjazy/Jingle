@@ -1,6 +1,5 @@
-import React, { useEffect, useImperativeHandle } from 'react'
+import React from 'react'
 import { withStyles } from '@material-ui/core/styles'
-import Button from '@material-ui/core/Button'
 
 const useStyles = theme => ({
     root: {
@@ -51,6 +50,16 @@ class VisualNote extends React.Component {
             }
         } else {
             clearInterval(this.requestID);
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.yValue != prevProps.yValue) {
+            this.divRef.current.style.top = String(this.props.xValue) + 'px';
+        }
+
+        if (this.props.height != prevProps.height) {
+            this.divRef.current.style.height = String(this.props.height) + 'px';
         }
     }
 

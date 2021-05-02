@@ -6,6 +6,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button'
 
 function TabPanel(props) {
     const { children, value, index} = props;
@@ -39,11 +40,6 @@ function LinkTab(props) {
     );
 }
 
-
-
-
-
-
 const useStyles = theme => ({
     root: {
         flexGrow: 1,
@@ -58,8 +54,10 @@ class WidgetBar extends React.Component {
             value: 0,
         };
 
-
     }
+
+
+    //We want the Track tab to have track length, instrument select, ...
 
     handleTabChange = (event, newValue) => {
         this.setState({
@@ -69,7 +67,7 @@ class WidgetBar extends React.Component {
 
 
     render() {
-        const { classes } = this.props;
+        const { classes, renderMP3Callback } = this.props;
 
         return (
             <div className={classes.root}>
@@ -79,14 +77,18 @@ class WidgetBar extends React.Component {
                         value={this.state.value}
                         onChange={this.handleTabChange}
                     >
-                        <LinkTab label="Track Info"/>
+                        <LinkTab label="Instruments"/>
                         <LinkTab label="Arpeggiator"/>
                         <LinkTab label="Help"/>
+                        <LinkTab label="Save/Load"/>
                     </Tabs>
                 </AppBar>
 
                 <TabPanel value={this.state.value} index={0}>
-                    Page One
+                    Track 1 Instrument: <br/>
+                    Track 2 Instrument: <br/>
+                    Track 3 Instrument: <br/>
+                    Track 4 Instrument: <br/>
                 </TabPanel>
 
                 <TabPanel value={this.state.value} index={1}>
@@ -98,6 +100,9 @@ class WidgetBar extends React.Component {
                     Change Octaves: Z (down), X (up)
                 </TabPanel>
 
+                <TabPanel value={this.state.value} index={3}>
+                    <Button onClick={renderMP3Callback}>Render MP3</Button>
+                </TabPanel>
 
             </div>
         );

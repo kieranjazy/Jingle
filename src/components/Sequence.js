@@ -1,3 +1,4 @@
+  
 /*
  * Sequence.js
  * Version 1.1
@@ -60,8 +61,8 @@ Sequence.prototype.getData = function(timeSteps) {
 	if(typeof(this.sequenceData[timeSteps]) == "undefined") {
 		return [];
 	} else {
-		console.log("Sequence Position : " + timeSteps + " " + this.sequenceData[timeSteps]);
-		return this.sequenceData[timeSteps].slice();
+		console.log("Sequence Position :" + timeSteps + " " + this.sequenceData[timeSteps]);
+		return this.sequenceData[timeSteps];
 	}
 };
 

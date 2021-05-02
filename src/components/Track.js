@@ -13,7 +13,8 @@ import VolumeUp from '@material-ui/icons/VolumeUp';
 import Grid from '@material-ui/core/Grid'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import { ThreeSixtyOutlined } from '@material-ui/icons';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 
 const toneKeys = [
     "KeyA", "KeyW", "KeyS", "KeyE", "KeyD", "KeyF", "KeyT", "KeyG", "KeyY", "KeyH", "KeyU", "KeyJ", "KeyK", "KeyO", "KeyL", "KeyP"
@@ -91,6 +92,9 @@ const useStyles = theme => ({
     redBarAnimation: {
         animation: "$moveLine 10000ms linear",
     },
+    '.ToggleButton:selected': {
+        backgroundColor: 'black'
+    }
 });
 
 class Track extends React.Component {
@@ -103,28 +107,26 @@ class Track extends React.Component {
             trackLength: 8000,
             timeStart: null,
             visualNotes: [],
-            //activeKeyCounter: 0
+            armed: this.props.getArmArrayIndex(),
         };
 
         this.volumeChange = this.volumeChange.bind(this);
         this.panChange = this.panChange.bind(this);
         this.clearTrack = this.clearTrack.bind(this);
         this.findFirstNonNullIndex = this.findFirstNonNullIndex.bind(this);
-        //this.addCurrentHeldKey = this.addCurrentHeldKey.bind(this);
+
 
         this.redBarRef = React.createRef();
         this.noteRef = React.createRef();
-        //this.currentVisualNoteRef = React.createRef();
 
         this.activeOctaves = [];
         this.currentVisualNoteRefs = [];
-        this.activeNotes = [null, null, null, null, null, null, null, null, null, null];
+        this.activeNotes = [null, null, null, null, null, null, null, null, null, null]; //10 possible active notes
 
         let i = 0;
         for (; i != 10; i++) {
             this.currentVisualNoteRefs[i] = React.createRef();
         }
-
     }
 
     volumeChange = (event, newValue) => {
@@ -145,9 +147,9 @@ class Track extends React.Component {
         });
     }
 
-    addVisualNote = (index, xValue, yValue) => {
+    addVisualNote = (index, xValue, yValue, height) => {
         this.setState({
-            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]} />],
+            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]} height={height}/>],
         })
 
         if (this.activeOctaves.indexOf(this.state.composerOctave) != -1) {
@@ -167,7 +169,7 @@ class Track extends React.Component {
         });
 
         this.redBarRef.current.style.animationPlayState = 'initial';
-        //this.currentVisualNoteRef = React.createRef();
+
         let i = 0;
         for (; i != 10; i++) {
             this.currentVisualNoteRefs[i] = React.createRef();
@@ -193,31 +195,15 @@ class Track extends React.Component {
             });
         }
 
-        /*
-        if (this.props.keyPressEvent != prevProps.keyPressEvent) {
-            if (this.props.keyPressEvent[1] == 'down') {
-                this.addVisualNote(this.state.activeKeyCounter - 1, (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length))
-                this.setState({activeKeyCounter: this.state.activeKeyCounter + 1});
-                console.log(this.state.activeKeyCounter)
-                
-
-            } else if (this.props.keyPressEvent[1] == 'up') {
-                console.log(this.state.activeKeyCounter);
-                this.currentVisualNoteRefs[this.state.activeKeyCounter - 1].current.toggleIsExpanding(); //find a way to modify index to include this.props.keyPressEvent[0]
-                this.setState({activeKeyCounter: this.state.activeKeyCounter - 1});
-                
-            }
-        }
-        */
-
-        if (this.props.keyPressEvent != prevProps.keyPressEvent && toneKeys.indexOf(this.props.keyPressEvent[0]) != -1) {
+        if (this.props.keyPressEvent != prevProps.keyPressEvent && toneKeys.indexOf(this.props.keyPressEvent[0]) != -1 && this.state.armed) {
             if (this.props.keyPressEvent[1] == 'down' && this.activeNotes.indexOf(this.props.keyPressEvent[0]) == -1) {
-                this.addVisualNote(this.findFirstNonNullIndex(this.activeNotes), (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7, (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length));
-
+                this.addVisualNote(
+                    this.findFirstNonNullIndex(this.activeNotes),
+                    (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7,
+                    (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length)
+                );
                 this.activeNotes[this.findFirstNonNullIndex(this.activeNotes)] = this.props.keyPressEvent[0];
-
             } else if (this.props.keyPressEvent[1] == 'up') {
-
                 if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])]) {
                     if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current) {
                         this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current.setIsExpanding(false);
@@ -231,7 +217,6 @@ class Track extends React.Component {
                 this.activeNotes[this.activeNotes.indexOf(this.props.keyPressEvent[0])] = null;
             }
         }
-
     }
 
     componentWillUnmount() {
@@ -252,11 +237,9 @@ class Track extends React.Component {
         return 0;
     }
 
-
     render() {
-        const { classes, setPlayTimelineState, toggleMuteArray, getTrackLength } = this.props;
-
-        //this.state.trackLength = getTrackLength();
+        const { classes, setPlayTimelineState, toggleMuteArray, getTrackLength, getArmArrayIndex, toggleArmArray } = this.props;
+        let armValue = false;
 
         return (
             <div className={classes.root}>
@@ -282,7 +265,9 @@ class Track extends React.Component {
                         </FormGroup>
 
                         <FormGroup column>
-                            <Button>Select</Button>
+                            <ToggleButton size="small" style={{marginRight: 10,}} selected={this.state.armed} onChange={() => {this.setState({armed: !this.state.armed})}} aria-label="armed">
+                                <FiberManualRecordIcon/>
+                            </ToggleButton>
                             <Button onClick={this.clearTrack}>Clear</Button>
                         </FormGroup>
                     </div>
@@ -326,106 +311,5 @@ class Track extends React.Component {
         );
     }
 }
-
-/*
-class Track extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            pan: 0.5,
-            volume: 100,
-            solo: false,
-            mute: false,
-            timelineAnimation: 'stop',
-        };
-
-        this.volumeChange = this.volumeChange.bind(this);
-        this.panChange = this.panChange.bind(this);
-
-        this.redBarRef = React.createRef();
-    }
-
-    volumeChange = (event, newValue) => {
-        this.setState({
-            volume: newValue
-        });
-    }
-
-    panChange = (event, newValue) => {
-        this.setState({
-            pan: newValue
-        })
-    }
-
-    muteChange = (event) => {
-        this.toggleMuteArray();
-    }
-
-    soloChange = (event) => {
-        //this.toggleSoloArray();
-    }
-
-    timelineAnimationChange = (newValue) => {
-        if (newValue === 'pause') {
-            this.redBarRef.current.style.animationPlayState = 'paused';
-        } else if (newValue === 'play') {
-            this.redBarRef.current.style.animationPlayState = 'inherit';
-        }
-
-        this.setState({
-            timelineAnimation: newValue,
-        })
-    }
-
-    componentWillUnmount() {
-        this.setState({
-            timelineAnimation: 'stop',
-        })
-    }
-
-
-    render() {
-        const { classes, setPlayTimeline, toggleMuteArray } = this.props;
-
-        return (
-            <div className={classes.root}>
-                <div className={classes.trackVisual}>
-                    <div className={classes.canvas}>
-                        <div className={clsx(classes.redBar,
-                            {
-                                [classes.redBarAnimation]: this.state.timelineAnimation === 'play' || this.state.timelineAnimation === 'pause',
-                            }//How about if paused, set marginLeft to current animation marginLeft value
-                        )}
-                        onAnimationEnd={() => setPlayTimeline('stop')} ref={this.redBarRef}>
-
-                        </div>
-                    </div>
-                </div>
-
-                <div className={classes.options}>
-                    <div className={classes.toggles}>
-                        <FormGroup row>
-                            <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" checked={false} onChange={toggleMuteArray}/>
-                            <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false}/>
-                        </FormGroup>
-
-                        <Button>Select</Button>
-                    </div>
-
-                    <div className={classes.sliders}>
-                        <Slider onChange={this.volumeChange} defaultValue={100} min={0} max={200}>
-
-                        </Slider>
-
-                        <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05}>
-
-                        </Slider>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-}
-*/
 
 export default withStyles(useStyles, { withTheme: true })(Track);
