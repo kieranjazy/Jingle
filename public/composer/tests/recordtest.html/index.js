@@ -65,10 +65,6 @@ function modifyBPM() {
 	composer.setBpm(bpm);
 }
 
-function dumpRecording() {
-	composer.saveData();
-}
-
 function play() {
 	let arpToggle = document.getElementById("arptoggle").checked;
 	let arpSpeed = document.getElementById("arpspeed");
@@ -100,4 +96,19 @@ function clearTrack(trackNum) {
 function playMetronome() {
 	console.log("Commencing Metronome");
 	composer.playMetronome();
+}
+
+function render() {
+	console.log("Rendering Mp3");
+	let filename = prompt("Please Enter a name: ");
+	composer.renderMp3(filename);
+}
+
+let saveData = "";
+function saveComposer() {
+	saveData = composer.saveData();
+}
+
+function loadComposer() {
+	composer.loadData(saveData);
 }

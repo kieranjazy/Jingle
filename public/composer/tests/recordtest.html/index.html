@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<title>Record Test</title>
+		<script type="text/javascript" src="lame.min.js" charset="utf-8"></script>
 		<script type="text/javascript" src="wavetables.js"></script>
 		<script type="text/javascript" src="sounds.js" charset="utf-8"></script>
 		<script type="text/javascript" src="metronome.js"></script>
@@ -32,9 +33,11 @@
 			<option value="0.5">1/16</option>
 			<option value="1">1/32</option>
 		</select> <br>
-		<button type="button" onclick="dumpRecording()">Dump Recording</button>
 		<button type="button" onclick="demo();">Load Dummy Data</button>
-		<button type="button" onclick="playMetronome();">Metronome</button>
+		<button type="button" onclick="playMetronome();">Metronome</button><br>
+		<button type="button" name="button" onclick="render();">Render Mp3</button>
+		<button type="button" name="button" onclick="saveComposer();">Save Data</button>
+		<button type="button" name="button" onclick="loadComposer();">Load Data</button>
 		<p>Instructions: <br></p>
 		<img src="instructions.png">
 	</body>
