@@ -4,7 +4,7 @@ let audioctx = new AudioContext();
  * Composer
  * Version 2.2 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 3/05/2021
+ * Last Edited 4/05/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -48,7 +48,7 @@ function Composer() {
 	this.metronomeSteps = 0;
 	//Master Volume is a value between 0 and 2
 	this.masterVolume = 1.0;
-	this.numTracks = 1;
+	this.numTracks = 2;
 	this.trackVolumes = [[1.0,1.0],[1.0,1.0]];
 	this.isMuted = [false,false];
 	this.instrumentVolumes = [1.0,1.0];
@@ -108,7 +108,8 @@ Composer.prototype.panTrack = function(trackNo, val) {
 	} else {
 		this.trackVolumes[trackNo] = [1.0,1.0];
 	}
-	console.log("Successfully changed volumes!");
+	console.log("Successfully changed volumes for Track at Index " + trackNo +"!");
+	console.log(this.trackVolumes[trackNo]);
 }
 
 Composer.prototype.getTrackPanning = function(trackNo) {
@@ -117,7 +118,7 @@ Composer.prototype.getTrackPanning = function(trackNo) {
 		//Returns 0.5 as default so it doesn't break
 		return 0.5
 	} else {
-		return 1 - (this.trackVolumes[trackNo][0]/2);
+		return 1 - (this.trackVolumes[trackNo][0] + this.trackVolumes[trackNo][0]);
 	}
 }
 
@@ -364,9 +365,9 @@ Composer.prototype.__play = function() {
 			nowBuffering[i]/=totalInstrumentVolume;
 		}
 	} else {
-		//Mono
+		//Stereo
 		let left = myArrayBuffer.getChannelData(0);
-		let right = myArrayBuffer.getChannelData(0);
+		let right = myArrayBuffer.getChannelData(1);
 		for(let i = 0; i < totalBufferSize; i++) {
 			//check if instrument is Playing in frame and then do the lovely calculations
 			if(totalInstrumentVolume==0) {
@@ -425,6 +426,7 @@ Composer.prototype.stop = async function() {
 	this.activeNotes=[[],[]];
 	this.sequencePosition=0;
 	this.isPlaying = false;
+	this.metronomePlaying = false;
 }
 
 
