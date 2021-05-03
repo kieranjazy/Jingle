@@ -53,7 +53,6 @@ exports.like = functions.https.onCall((data, context) => {
 // comment function // TO DO EDIT
 
 exports.comment = functions.https.onCall((data, context) => {
-
     if (!context.auth) {
         throw new functions.https.HttpsError(
             'unauthenticated',
@@ -69,16 +68,17 @@ exports.comment = functions.https.onCall((data, context) => {
             if(doc.data().comments.length <= 0) {
                 const commentedOnDoc = user.collection('commentedOn').doc(data.id);
                 post.update({
-                    comments: admin.firestore.FieldValue.arrayUnion(data.comment)
-                });
-                return commentedOnDoc.set({
-                    comments: [data.comment]
-                });
+                    comments: admin.firestore.FieldValue.arrayUnion({comment: data.comment, Uid: context.auth.uid, Uname: data.username})
+                })
+                return commentedOnDoc.set({                    
+                    comments: [data.comment]                    
+                })
             }
             else {
                 post.update({
-                    comments: admin.firestore.FieldValue.arrayUnion(data.comment)
-                });
+                    comments: admin.firestore.FieldValue.arrayUnion({comment: data.comment, Uid: context.auth.uid, Uname: data.username})
+                })
+
                 const commentedOnDoc = user.collection('commentedOn').doc(data. id);
                 commentedOnDoc.get().then((docSnapshot) => {
                     if (docSnapshot.exists) {

@@ -13,53 +13,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">  
 </head>
 <body>
-    <!-- HTML if the user is not logged in  -->
-    <div class="notLoggedIn" style="display:none;">
-        <div class="login-box">
-            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
-            <h1>Login Here</h1>
-            <form id="loginForm">
-              <!-- EMAIL INPUT -->
-              <label for="email">Email</label>
-              <input id="loginEmail" type="text" placeholder="Enter Email">
-              <!-- PASSWORD INPUT -->
-              <label for="password">Password</label>
-              <input id="loginPassword" type="password" placeholder="Enter Password">
-              
-              <input type="submit" value="Log In">
-              <a onclick="openPasswordRecovery()">Forgot your Password?</a><br>
-              <a onclick="openRegister()" href="#">Don't have An account?</a>
-            </form>
-          </div>
-          <div style="display: none;" class="register-box">
-            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
-            <h1>Register Here</h1>
-            <form id="registerForm">
-               <!-- EMAIL INPUT -->
-               <label for="email">Email</label>
-               <input id="registerEmail" type="text" placeholder="Enter Email">
-              <!-- PASSWORD INPUT -->
-              <label for="username">Username</label>
-              <input id="registerUsername" type="text" placeholder="Enter Username">
-              <label for="password">Password</label>
-              <input id="registerPassword" type="password" placeholder="Enter Password">        
-              <input type="submit" value="Sign Up">    
-              <a onclick="openLogin()" href="#">Already have an Account? Log in</a>
-            </form>
-          </div>
-          <div class="resetPassword-box" style="display: none;">
-            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
-            <h1>Recover password</h1>
-            <form id="resetPasswordForm">
-               <!-- EMAIL INPUT -->
-               <label for="email">Email</label>
-               <input id="resetPasswordEmail" type="email" placeholder="Enter Email">
-              <!-- PASSWORD INPUT -->      
-              <input type="submit" value="Send recovery email">             
-              <a onclick="openLogin()" href="#">Already have an Account? Log in</a>
-            </form>
-          </div>
-    </div>
+    
 
 
     <!-- --------------- HTML if the user is logged in ------------ -->
@@ -118,15 +72,7 @@
 
 
 
- <!-- HTML is the user has an account but hasn't verified their email -->
-    <div class="emailNotVerified" style="display:none;">
-        <div class="verifyEmail">
-            <div class="message">
-                <h1 class="text-center">Almost there!</h1>
-                <p class="text-center">Just verify your email address and <a id="underlinedLogin" onclick="backToLogin()">login</a></p>
-            </div>
-        </div>
-    </div>
+ 
 
     
 
