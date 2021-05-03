@@ -2,9 +2,9 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioctx = new AudioContext();
 /*
  * Composer
- * Version 2.1 (work in progress though!)
+ * Version 2.2 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 2/05/2021
+ * Last Edited 3/05/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -554,6 +554,16 @@ Composer.prototype.playMetronome = async function() {
 	source.start();
 	source.onended = () => {this.playMetronome();this.metronomeSteps++;};
 };
+
+Composer.prototype.setTrackInstrument = function(trackNo, instrumentData) {
+	if(this.loadedInstruments.length > trackNo) {
+		this.loadedInstruments.splice(trackNo,1,instrumentData);
+	} else if(this.loadedInstruments.length == trackNo) {
+		this.loadedInstruments.push(instrumentData);
+	}
+	this.numTracks = this.loadedInstruments.length;
+	this.fetchInstrument(instrumentData);
+}
 
 Composer.prototype.fetchInstrument = function(instrument) {
 	for(let i = 0; i < this.loadedInstruments.length; i++) {
