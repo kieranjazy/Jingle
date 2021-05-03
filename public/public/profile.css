@@ -1,0 +1,21 @@
+#accountDetails {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+.updateProfilePic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction:column;
+}
+
+#accountDetails .updateProfilePic  {
+    margin-left: 30px;
+}
+
+#getprofilePicButton {
+    margin-top: 20px;
+}

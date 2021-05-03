@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="loginMenu.css">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="sweetalert2.all.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">  
+</head>
+<body>
+    <!-- HTML if the user is not logged in  -->
+    <div class="notLoggedIn" style="display:none;">
+        <div class="login-box">
+            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
+            <h1>Login Here</h1>
+            <form id="loginForm">
+              <!-- EMAIL INPUT -->
+              <label for="email">Email</label>
+              <input id="loginEmail" type="text" placeholder="Enter Email">
+              <!-- PASSWORD INPUT -->
+              <label for="password">Password</label>
+              <input id="loginPassword" type="password" placeholder="Enter Password">
+              
+              <input type="submit" value="Log In">
+              <a onclick="openPasswordRecovery()">Forgot your Password?</a><br>
+              <a onclick="openRegister()" href="#">Don't have An account?</a>
+            </form>
+          </div>
+          <div style="display: none;" class="register-box">
+            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
+            <h1>Register Here</h1>
+            <form id="registerForm">
+               <!-- EMAIL INPUT -->
+               <label for="email">Email</label>
+               <input id="registerEmail" type="text" placeholder="Enter Email">
+              <!-- PASSWORD INPUT -->
+              <label for="username">Username</label>
+              <input id="registerUsername" type="text" placeholder="Enter Username">
+              <label for="password">Password</label>
+              <input id="registerPassword" type="password" placeholder="Enter Password">        
+              <input type="submit" value="Sign Up">    
+              <a onclick="openLogin()" href="#">Already have an Account? Log in</a>
+            </form>
+          </div>
+          <div class="resetPassword-box" style="display: none;">
+            <img src="JingleLogoSquare.png" class="avatar" alt="Avatar Image">
+            <h1>Recover password</h1>
+            <form id="resetPasswordForm">
+               <!-- EMAIL INPUT -->
+               <label for="email">Email</label>
+               <input id="resetPasswordEmail" type="email" placeholder="Enter Email">
+              <!-- PASSWORD INPUT -->      
+              <input type="submit" value="Send recovery email">             
+              <a onclick="openLogin()" href="#">Already have an Account? Log in</a>
+            </form>
+          </div>
+    </div>
+
+
+    <!-- --------------- HTML if the user is logged in ------------ -->
+    <div class="loggedIn" style="display:none;">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#"><img id="JingleLogo" src="JingleLogoWhite.png"></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+          
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                  <a class="nav-link" href="https://jingle-nuigalway.web.app">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="https://jingle-nuigalway.web.app/feed">Feed</a>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <img class="profileImg">
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="navbarDropdown">            
+                    <a class="dropdown-item" href="https://jingle-nuigalway.web.app/profile">Settings</a>
+                    <div class="dropdown-divider"></div>
+                    <a id="logOutButton" class="dropdown-item" href="">Log out</a>
+                  </div>
+                </li>        
+              </ul>      
+            </div>
+          </nav>
+        <p>Make some sweet music here</p>
+        <button id="postFormButton">
+            <h3>Create a post</h3>
+        </button>
+        <div class="postFormDiv" style="display:none;">
+            <form id="postForm" >
+                <label>Post title</label>
+                <input id="postTitle" type="text">
+                <lable>Description</lable>
+                <input id="postDescription" type="text">
+                <label>Upload mp3 audio</label>
+                <input type="file" value="upload" id="uploadMp3">
+                <div class="postFormButtons">
+                    <button id="postFormPostButton">Post</button>
+                    <button id="postFormCancelButton">Cancel</button>
+                </div>
+                
+            </form>
+        </div> 
+        
+        
+         
+              
+    </div>
+
+
+
+ <!-- HTML is the user has an account but hasn't verified their email -->
+    <div class="emailNotVerified" style="display:none;">
+        <div class="verifyEmail">
+            <div class="message">
+                <h1 class="text-center">Almost there!</h1>
+                <p class="text-center">Just verify your email address and <a id="underlinedLogin" onclick="backToLogin()">login</a></p>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-storage.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        var firebaseConfig = {
+            apiKey: "AIzaSyBBrqwZocY1MlkDQE2fqX_vB3X_2zUqaDY",
+            authDomain: "jingle-nuigalway.firebaseapp.com",
+            projectId: "jingle-nuigalway",
+            storageBucket: "jingle-nuigalway.appspot.com",
+            messagingSenderId: "360462025610",
+            appId: "1:360462025610:web:9bedbf41b74799883cbe73",
+            measurementId: "G-Q7FSWJXB8D"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
+        // auth and firestore refrences
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+   <script src="scripts/loginMenu.js"></script>
+   <script src="scripts/auth.js"></script>
+   <script src="scripts/post.js"></script>
+   
+</body>
+</html>

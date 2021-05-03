@@ -1,0 +1,25 @@
+.postFormDiv {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    
+}
+
+.postFormDiv form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.postFormDiv form * {
+    margin: 5px;
+}
+
+.postFormButtons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

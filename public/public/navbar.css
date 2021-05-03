@@ -1,0 +1,15 @@
+#JingleLogo {
+  height: 70px;
+ /*margin-right: 400px;*/
+}
+
+.nav-link {
+  font-size: 30px !important;
+  font-family: Arial, Helvetica, sans-serif;
+  color: red;
+}
+
+.profileImg {
+  height: 50px;
+  border-radius: 50%;
+}

@@ -1,0 +1,165 @@
+body {
+    background-color: rgb(226, 226, 226);
+}
+
+div, body {
+    margin: 0;
+    padding: 0;    
+}
+
+
+#postList {
+   
+    width: 100%;
+    
+}
+
+.createComment {
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;    
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    padding: 100px 20px;
+    background-color: orange;
+}
+
+.createComment * {
+    margin: 5px 0px;
+}
+
+.individualPost {
+    margin: 30px 10px;
+}
+
+.socialIcons {
+    display: flex;
+    align-items: flex-start;
+}
+
+.socialIcons > * {
+    margin: 0px 10px;
+}
+
+.comments {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+audio:focus {
+    outline: none;
+}
+
+input:focus, textarea:focus, select:focus{
+    outline: none;
+}
+
+textarea {
+    border: none;
+    background-color: transparent;
+    resize: none;
+    outline: none;
+}
+
+.individualComment {
+    text-align: left;
+}
+
+.bigCommentSection {    
+    z-index: 3 !important;        
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 25% !important;
+         
+}
+
+.blackBackground {
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 100% !important;
+}
+
+.openCommentLink:hover, #exitImg:hover{
+    cursor: pointer;
+}
+
+
+/* CSS WILL BE REMOVED BELOW!!! */
+/* ________---- DON'T FORGET -----_______*/
+#Thecard {
+    width: 50% !important;
+    margin-left: 50px;
+
+} 
+
+#bigProfilePic {
+    height: 40px;
+    border-radius:50%;
+}
+
+.left-flex {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.card-header > * {
+    margin: 10px;
+}
+
+#smallProfilePic {
+    height: 35px;
+    border-radius: 50%;
+    margin-right: 30px;
+}
+
+.comment {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.nameAndComment > * {
+    margin: 0;
+    padding: 0;
+}
+
+.card-body69 {
+    height: 400px;
+    overflow: auto;
+}
+
+.spacerr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#filterDiv {
+    margin-top: 30px;
+}
+
+#search-button {
+    height: 38px !important;
+}
+
+#radio-filters {
+    margin-top: 20px;
+}
+
+#highlight {
+    background: yellow;
+}
