@@ -71,3 +71,5 @@ node_modules/
 #not including proprietary samples
 /public/composer/tests/dsamples/*
 *.wav
+
+config.js
