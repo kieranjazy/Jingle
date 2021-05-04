@@ -177,6 +177,11 @@ Composer.prototype.generateAudioData = function(totalBufferSize,frameSize) {
 			this.keyPositions.push({});
 		}
 	}
+	if(this.instrumentVolumes.length < temp_val) {
+		while(this.instrumentVolumes.length < temp_val) {
+			this.instrumentVolumes.push(1.0);
+		}
+	}
 	//Had to separate this from the Play method in order to streamline the MP3 renderer
 	//Basically in order to mitigate this sounding crap, I have to now make audio streams for every instrument and perform a mixing operation at the very end :)
 	let instrument_streams = [];
@@ -274,7 +279,6 @@ Composer.prototype.generateAudioData = function(totalBufferSize,frameSize) {
 				isUpdated[j] = true;
 				if(this.loadedInstruments[j]["type"] === 0) {
 					//Wavetables
-					let note = 0;
 					if(this.hasArpeggio[j] || notesPerInstrument[j] == 0) {
 						this.arpeggioPosition[j] %= notesPerInstrument[j];
 						let note = this.activeNotes[j][Math.floor(this.arpeggioPosition[j])];
@@ -290,7 +294,7 @@ Composer.prototype.generateAudioData = function(totalBufferSize,frameSize) {
 							let upper = Math.floor(this.keyPositions[j][note] + 1) % this.instrumentBank[j].length;
 							instrument_streams[j][framePosition + i] = Math.min(Math.max(this.instrumentVolumes[j] * ( (this.instrumentBank[j][lower] + ((this.instrumentBank[j][upper] - this.instrumentBank[j][lower]) * (this.keyPositions[j][note]%1)))),-1),1);
 						}
-						instrument_streams[framePosition + i]/=notesPerInstrument[j];
+						instrument_streams[j][framePosition + i]/=notesPerInstrument[j];
 					}
 				} else {
 					//Drum Machine
@@ -706,7 +710,7 @@ Composer.prototype.renderMp3 = function(filename) {
 			left[i] = templeft;
 			right[i] = tempright;
 		}
-		for(let i = 0; i < samples.length; i+=576) {
+		for(let i = 0; i < left.length; i+=576) {
 			let leftChunk = left.subarray(i, i+576);
 			let rightChunk = right.subarray(i,i+576);
 			let mp3buf = mp3Encoder.encodeBuffer(leftChunk,rightChunk);

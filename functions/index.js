@@ -98,3 +98,18 @@ exports.comment = functions.https.onCall((data, context) => {
     }
 
 });
+
+exports.addFile = functions.https.onCall((data, context) => {
+	if(!context.auth) {
+		//Not authenticated
+		throw new functions.https.HttpsError("unauthenticated","Only authenticated users can save files!");
+	} else {
+		const user = admin.firestore().collection('users').doc(context.auth.uid);
+		if(user.saveFiles.indexOf(data.filename) == - 1) {
+			user.saveFiles.push(data.filename);
+			return {success:true};
+		} else {
+			return {success:false};
+		}
+	}
+});
