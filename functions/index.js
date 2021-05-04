@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const cors = require('cors'){origin:true};
 admin.initializeApp();
 
 
@@ -70,8 +71,8 @@ exports.comment = functions.https.onCall((data, context) => {
                 post.update({
                     comments: admin.firestore.FieldValue.arrayUnion({comment: data.comment, Uid: context.auth.uid, Uname: data.username})
                 })
-                return commentedOnDoc.set({                    
-                    comments: [data.comment]                    
+                return commentedOnDoc.set({
+                    comments: [data.comment]
                 })
             }
             else {
@@ -95,9 +96,5 @@ exports.comment = functions.https.onCall((data, context) => {
             }
         });
     }
-
-});
-
-exports.fetchInstrument = functions.https.onCall((data,context) => {
 
 });

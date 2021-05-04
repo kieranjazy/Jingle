@@ -11,11 +11,11 @@ let usersArr = [];
 db.collection("users").get().then((querySnapshot) => {
     querySnapshot.forEach((doc) => {
         usersArr.push(doc);
-        
+
     });
 });
 
-// register 
+// register
 const registerForm = document.querySelector('#registerForm');
 registerForm.addEventListener('submit', RegisterUser);
 
@@ -27,11 +27,11 @@ function RegisterUser(e) {
     const password = registerForm['registerPassword'].value;
 
     let uniqueUsername = true;
-    
+
     if (uname.length < 4 || uname.length > 12) {
         Swal.fire({
             icon: 'error',
-            title: 'Please enter a username between 4 and 12 characters',                    
+            title: 'Please enter a username between 4 and 12 characters',
         })
         uniqueUsername = false;
         registerForm['registerPassword'].value = '';
@@ -40,37 +40,37 @@ function RegisterUser(e) {
         if (doc.data().username == uname) {
             Swal.fire({
                 icon: 'error',
-                title: 'Username already taken',                    
+                title: 'Username already taken',
             })
             uniqueUsername = false;
             registerForm['registerPassword'].value = ''
             return;
         }
-            
+
     });
-    
-    
+
+
     if (uniqueUsername) {
-        registerForm.reset() 
+        registerForm.reset()
         // sign up the user
         console.log("dont return")
         auth.createUserWithEmailAndPassword(email, password).then(cred => {
             db.collection('users').doc(cred.user.uid).set({
-                username: uname, 
+                username: uname,
                 likedPosts: [],
-                comments: []
+                comments: [],
+								saveFiles: []
             })
             cred.user.updateProfile({
                 displayName: uname
-            })        
+            })
 
-            
             const storageRef = firebase.storage().ref(cred.user.uid + '/profilePic')
             storageRef.putString('data:image/jpeg;base64,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', 'data_url')
 
             var user = firebase.auth().currentUser;
 
-            user.sendEmailVerification();            
+            user.sendEmailVerification();
             Swal.fire({
                 icon: 'success',
                 title: 'Registration complete!',
@@ -81,7 +81,7 @@ function RegisterUser(e) {
                 imageAlt: 'Custom image',
             })
         })
-        .catch((e) => {      
+        .catch((e) => {
             registerForm['registerUsername'].value = uname;
             registerForm['registerEmail'].value = email;
             console.log(e.code)
@@ -95,18 +95,14 @@ function RegisterUser(e) {
             else if (e.code.substring(5) == "weak-password") {
                 errorMessage = "Password not strong enough"
             }
-            
+
             Swal.fire({
                 icon: 'error',
-                title: errorMessage,            
+                title: errorMessage,
             })
         })
     }
-}   
-
-         
-   
-
+}
 
 const logOutButton = document.querySelector('#logOutButton');
 logOutButton.addEventListener('click', (e) => {
@@ -120,30 +116,30 @@ const loginForm = document.querySelector('#loginForm');
 
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    
+
     // get user info
     const email = loginForm['loginEmail'].value;
     const password = loginForm['loginPassword'].value;
-   
+
     auth.signInWithEmailAndPassword(email, password).catch((e) => {
         if (e.code === "auth/user-not-found") {
             Swal.fire({
                 icon: 'error',
-                title: 'User not found with that email',                    
+                title: 'User not found with that email',
             })
         }
         else if (e.code === "auth/invalid-email") {
             Swal.fire({
                 icon: 'error',
-                title: 'Invalid email',                    
+                title: 'Invalid email',
             })
         }
         else if(e.code === "auth/wrong-password") {
             Swal.fire({
                 icon: 'error',
-                title: 'Wrong password',                    
+                title: 'Wrong password',
             })
-            
+
         }
     });
     //loginForm.reset();
@@ -153,18 +149,18 @@ loginForm.addEventListener('submit', (e) => {
 const resetPasswordForm = document.getElementById('resetPasswordForm')
 
 resetPasswordForm.addEventListener('submit', (e) => {
-    e.preventDefault();    
-    const email = resetPasswordForm['resetPasswordEmail'].value;    
+    e.preventDefault();
+    const email = resetPasswordForm['resetPasswordEmail'].value;
     auth.sendPasswordResetEmail(email).then(function() {
         Swal.fire({
             icon: 'success',
-            title: 'Password recovery email sent',                    
+            title: 'Password recovery email sent',
         })
         openLogin();
       }).catch(function(error) {
         Swal.fire({
             icon: 'error',
-            title: 'Email not registered',                    
+            title: 'Email not registered',
         })
       });
 
@@ -174,46 +170,43 @@ resetPasswordForm.addEventListener('submit', (e) => {
 
 // listen for auth status changes
 auth.onAuthStateChanged(user => {
-    if (user) {        
+    if (user) {
         console.log("user logged in");
         console.log(user);
         if (user.emailVerified) {
             loggedInDiv.style.display = 'block';
             notLoggedInDiv.style.display = 'none';
             emailNotVerifiedDiv.style.display = 'none';
-            
+
             const profileImg = document.querySelector('.profileImg')
-            const storage = firebase.storage();          
+            const storage = firebase.storage();
             const pathReference = storage.ref(user.uid + '/profilePic');
             pathReference.getDownloadURL().then((url) => {
                 profileImg.src = url;
             })
         }
-        
+
         else {
             loggedInDiv.style.display = 'none';
             notLoggedInDiv.style.display = 'none';
             emailNotVerifiedDiv.style.display = 'block';
             auth.signOut();
-        }        
-        
+        }
+
     }
     else {
         if (emailNotVerifiedDiv.style.display == 'block') {
             return
-        }  
+        }
         else {
             console.log("user logged out");
             loggedInDiv.style.display = 'none';
             notLoggedInDiv.style.display = 'block';
             loginPopUp.style.display = 'block';
-            registerPopUp.style.display = 'none'; 
+            registerPopUp.style.display = 'none';
             emailNotVerifiedDiv.style.display = 'none';
-        }     
-        
-        
-              
-        
+        }
+
     }
 
 })
@@ -222,11 +215,9 @@ function backToLogin() {
     loggedInDiv.style.display = 'none';
     notLoggedInDiv.style.display = 'block';
     loginPopUp.style.display = 'block';
-    registerPopUp.style.display = 'none'; 
+    registerPopUp.style.display = 'none';
     emailNotVerifiedDiv.style.display = 'none';
 }
 
 
 // ________________________________________________________________________//
-
-
