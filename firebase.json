@@ -14,12 +14,14 @@
     ],
     "rewrites": [
       {
-        "source": "login",
-        "destination": "/login.html"
+        "source": "/feed",
+        "destination": "/feed.html",
+        "type": "301"
       },
       {
-        "source": "registration",
-        "destination": "/registration.html"
+        "source": "/profile",
+        "destination": "/profile.html",
+        "type": "301"
       },
       {
         "source": "**",
