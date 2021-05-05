@@ -39,17 +39,14 @@ const useStyles = theme => ({
         marginLeft: 10,
         top: '10px',
     },
-    BPM: {
-
-    },
 });
 
 const keyBindings = [
-    "KeyZ","KeyX",
+    "KeyZ", "KeyX",
 ];
 
 const toneKeys = [
-    "KeyA","KeyW","KeyS","KeyE","KeyD","KeyF","KeyT","KeyG","KeyY","KeyH","KeyU","KeyJ","KeyK","KeyO","KeyL","KeyP"
+    "KeyA", "KeyW", "KeyS", "KeyE", "KeyD", "KeyF", "KeyT", "KeyG", "KeyY", "KeyH", "KeyU", "KeyJ", "KeyK", "KeyO", "KeyL", "KeyP"
 ];
 
 class TrackManager extends React.Component {
@@ -87,7 +84,7 @@ class TrackManager extends React.Component {
     }
 
     getTrackLength = () => {
-        return (1/(this.state.bpm / 60)) * 16000;
+        return (1 / (this.state.bpm / 60)) * 16000;
         //return Math.floor((this.state.bpm*15.6249/this.state.bpm*0.00052083) * 1000000)
     }
 
@@ -96,19 +93,19 @@ class TrackManager extends React.Component {
             return;
 
         if (newState === 'record') {
-            this.setState({playTimelineState: 'recordPre'})
+            this.setState({ playTimelineState: 'recordPre' })
 
             let i = 0;
-            for(; i != this.state.armArray.length; i++) {
+            for (; i != this.state.armArray.length; i++) {
                 if (this.state.armArray[i]) {
                     this.composer.record(i);
                 }
 
             }
 
-            setTimeout(() => {this.setState({playTimelineState: 'record'})}, 240000 / this.state.bpm); //magic number dont ask dont tell
+            setTimeout(() => { this.setState({ playTimelineState: 'record' }) }, 240000 / this.state.bpm); //magic number dont ask dont tell
         } else {
-            this.setState({playTimelineState: newState});
+            this.setState({ playTimelineState: newState });
 
             if (newState == 'play') {
                 console.log("Track 1 mute state: " + this.composer.getTrackMuteState(0) + " and Track 2 mute state: " + this.composer.getTrackMuteState(1))
@@ -119,33 +116,33 @@ class TrackManager extends React.Component {
                 this.composer.stop();
             }
         }
-        
+
     }
 
     setMasterVolume = (e, newState) => {
-        this.setState({masterVolume: newState});
+        this.setState({ masterVolume: newState });
         this.composer.setMasterVolume(newState);
     }
 
     setChannels = (e, newState) => {
-        this.setState({channels: newState})
+        this.setState({ channels: newState })
         this.composer.setNumberOfChannels(newState);
         console.log(this.composer.getNumberOfChannels())
     }
 
     setBPM = (newState) => {
         this.composer.setBpm(newState);
-        this.setState({bpm: newState});
-        
-       // console.log(this.composer.getBpm());
+        this.setState({ bpm: newState });
+
+        // console.log(this.composer.getBpm());
     }
 
     setKeyPressEvent = (keyPress, state) => {
-        this.setState({keyPressEvent: [keyPress, state]});
+        this.setState({ keyPressEvent: [keyPress, state] });
     }
 
     setKeyPressValue = (keyPress, state) => {
-        this.setState({keyPressEvent: keyPress, state});
+        this.setState({ keyPressEvent: keyPress, state });
     }
 
     submitHandler = (e) => {
@@ -195,10 +192,10 @@ class TrackManager extends React.Component {
             //console.log(index);
 
             if (index == 0)
-                this.setState({octave: this.state.octave - 1});
+                this.setState({ octave: this.state.octave - 1 });
 
-            if (index == 1) 
-                this.setState({octave: this.state.octave + 1});
+            if (index == 1)
+                this.setState({ octave: this.state.octave + 1 });
         }
 
 
@@ -258,13 +255,42 @@ class TrackManager extends React.Component {
 
 
     loadTrackManagerFromJSON() {
+        if (this.trackManagerSaveData.length == 0) {
+            console.log("Sorry, no data to load.");
+            return;
+        }
+
+
         this.composer.loadData(this.composerSaveData);
 
         if (this.trackManagerSaveData.length == 0) {
             console.log('Failed to load data for track manager');
         }
-
         let trackManagerData = JSON.parse(this.trackManagerSaveData);
+
+        if (typeof (trackManagerData.masterVolume) != "undefined") {
+            this.setState({
+                masterVolume: trackManagerData.masterVolume
+            })
+        }
+
+        if (typeof (trackManagerData.bpm) != "undefined") {
+            this.setState({
+                bpm: trackManagerData.bpm
+            })
+        }
+
+        if (typeof (trackManagerData.channels) != "undefined") {
+            this.setState({
+                channels: trackManagerData.channels
+            })
+        }
+
+        if (typeof (trackManagerData.muteArray) != "undefined") {
+            this.setState({
+                muteArray: trackManagerData.muteArray
+            })
+        }
 
     }
 
@@ -272,7 +298,10 @@ class TrackManager extends React.Component {
         this.composerSaveData = this.composer.saveData();
 
         let trackManagerSaveFile = {
-
+            masterVolume: this.state.masterVolume,
+            bpm: this.state.bpm,
+            channels: this.state.channels,
+            muteArray: this.state.muteArray
         };
 
         this.trackManagerSaveData = JSON.stringify(trackManagerSaveFile);
@@ -287,16 +316,16 @@ class TrackManager extends React.Component {
 
                 <div className={classes.controlsDiv}>
                     <ButtonGroup variant='contained' color='primary'>
-                        <Button onClick={() => this.setPlayTimelineState('play')}><PlayArrowIcon/></Button>
-                        <Button onClick={() => this.setPlayTimelineState('pause')}><PauseIcon/></Button>
-                        <Button onClick={() => this.setPlayTimelineState('stop')}><StopIcon/></Button>
-                        <Button onClick={() => this.setPlayTimelineState('record')}><FiberManualRecordIcon/></Button>
+                        <Button onClick={() => this.setPlayTimelineState('play')}><PlayArrowIcon /></Button>
+                        <Button onClick={() => this.setPlayTimelineState('pause')}><PauseIcon /></Button>
+                        <Button onClick={() => this.setPlayTimelineState('stop')}><StopIcon /></Button>
+                        <Button onClick={() => this.setPlayTimelineState('record')}><FiberManualRecordIcon /></Button>
                         <Button onClick={() => this.composer.playMetronome()}>Metronome</Button>
                     </ButtonGroup>
 
                     <Grid container spacing={1}>
                         <Grid item>
-                            <VolumeDown style={{position: 'relative', top: '10px'}}/>
+                            <VolumeDown style={{ position: 'relative', top: '10px' }} />
                         </Grid>
                         <Grid item>
                             <Slider onChange={this.setMasterVolume} className={classes.masterVolumeSlider} defaultValue={1} min={0} max={2} step={0.01}>
@@ -304,46 +333,48 @@ class TrackManager extends React.Component {
                             </Slider>
                         </Grid>
                         <Grid item>
-                            <VolumeUp style={{position: 'relative', top: '10px'}}/>
+                            <VolumeUp style={{ position: 'relative', top: '10px' }} />
                         </Grid>
                     </Grid>
 
-                    <ToggleButtonGroup style={{marginRight: 15, backgroundColor:'#3f51b5'}} value={this.state.channels} exclusive onChange={this.setChannels}>
-                        <ToggleButton style={{color: 'white'}} value={1}>
+                    <ToggleButtonGroup style={{ marginRight: 15, backgroundColor: '#3f51b5' }} value={this.state.channels} exclusive onChange={this.setChannels}>
+                        <ToggleButton style={{ color: 'white' }} value={1}>
                             Mono
                         </ToggleButton>
 
-                        <ToggleButton style={{color: 'white'}} value={2}>
+                        <ToggleButton style={{ color: 'white' }} value={2}>
                             Stereo
                         </ToggleButton>
                     </ToggleButtonGroup>
 
                     <form className={classes.BPM} noValidate autoComplete='off'>
-                        <TextField defaultValue={this.state.bpm} label="BPM" inputRef={this.textFieldRef} onChange={this.submitHandler}/>
+                        <TextField defaultValue={this.state.bpm} label="BPM" inputRef={this.textFieldRef} onChange={this.submitHandler} />
                     </form>
                 </div>
 
                 <div className={classes.trackDiv}>
-                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => {this.composer.panTrack(0, newPan);}} clearTrackCallback={() => this.composerClearTrack(0)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} toggleArmArray={() => this.toggleArmArray(0)} getArmArrayIndex={() => this.getArmArrayIndex(0)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent}/>
-                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => {this.composer.panTrack(1, newPan);}} clearTrackCallback={() => this.composerClearTrack(1)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} toggleArmArray={() => this.toggleArmArray(1)} getArmArrayIndex={() => this.getArmArrayIndex(1)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent}/>
-                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => {this.composer.panTrack(2, newPan);}} clearTrackCallback={() => this.composerClearTrack(2)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} toggleArmArray={() => this.toggleArmArray(2)} getArmArrayIndex={() => this.getArmArrayIndex(2)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent}/>
-                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => {this.composer.panTrack(3, newPan);}} clearTrackCallback={() => this.composerClearTrack(3)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} toggleArmArray={() => this.toggleArmArray(3)} getArmArrayIndex={() => this.getArmArrayIndex(3)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent}/>
+                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => { this.composer.panTrack(0, newPan); }} clearTrackCallback={() => this.composerClearTrack(0)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(0)} toggleArmArray={() => this.toggleArmArray(0)} getArmArrayIndex={() => this.getArmArrayIndex(0)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent} />
+                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => { this.composer.panTrack(1, newPan); }} clearTrackCallback={() => this.composerClearTrack(1)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(1)} toggleArmArray={() => this.toggleArmArray(1)} getArmArrayIndex={() => this.getArmArrayIndex(1)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent} />
+                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => { this.composer.panTrack(2, newPan); }} clearTrackCallback={() => this.composerClearTrack(2)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(2)} toggleArmArray={() => this.toggleArmArray(2)} getArmArrayIndex={() => this.getArmArrayIndex(2)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent} />
+                    <Track isLoadingFromJSON={this.state.isLoadingFromJSON} isSavingToJSON={this.state.isSavingToJSON} changePan={(newPan) => { this.composer.panTrack(3, newPan); }} clearTrackCallback={() => this.composerClearTrack(3)} composerOctave={this.state.octave} setPlayTimelineState={this.setPlayTimelineState} toggleMuteArray={() => this.toggleMuteArray(3)} toggleArmArray={() => this.toggleArmArray(3)} getArmArrayIndex={() => this.getArmArrayIndex(3)} playTimelineState={this.state.playTimelineState} getTrackLength={() => this.getTrackLength()} keyPressEvent={this.state.keyPressEvent} />
                 </div>
 
-                <WidgetBar renderMP3Callback={() => {this.renderMP3()}} composerSaveDataCallback={() => {
+                <WidgetBar renderMP3Callback={() => { this.renderMP3() }} composerSaveDataCallback={() => {
                     this.toggleIsSavingToJSON();
                     this.saveTrackManagerToJSON();
                     this.toggleIsSavingToJSON();
                 }} composerLoadDataCallback={() => {
-                    this.toggleIsLoadingFromJSON();
-                    this.loadTrackManagerFromJSON();
-                    this.toggleIsLoadingFromJSON();
-                }}  arpeggiatorToggleCallback={() => {
+                    if (this.trackManagerSaveData != null) {
+                        this.toggleIsLoadingFromJSON();
+                        this.loadTrackManagerFromJSON();
+                        this.toggleIsLoadingFromJSON();
+                    }
+                }} arpeggiatorToggleCallback={() => {
                     this.composer.setArpeggioState(0, !this.composer.getArpeggioState(0));
-                }}  arpeggiatorChangeCallback={(newSpeed) => {
+                }} arpeggiatorChangeCallback={(newSpeed) => {
                     this.composer.setArpeggioSpeed(0, newSpeed * 1);
                 }}
-                
+
                 />
             </div>
         );

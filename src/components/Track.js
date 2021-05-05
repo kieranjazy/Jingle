@@ -1,9 +1,8 @@
-import React, { createContext, useEffect, useRef } from 'react'
-import { makeStyles, withStyles, createStyles } from '@material-ui/core/styles'
+import React from 'react'
+import { withStyles } from '@material-ui/core/styles'
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import Slider from '@material-ui/core/Slider'
 import Button from '@material-ui/core/Button'
 import clsx from 'clsx';
@@ -300,11 +299,28 @@ class Track extends React.Component {
             })
         }
 
+        if (typeof(trackData.pan) != "undefined") {
+            this.setState({
+                pan: trackData.pan
+            });
+        }
+
+        if (typeof(trackData.volume) != "undefined") {
+            this.setState({
+                volume: trackData.volume
+            });
+        }
+
+        if (typeof(trackData.trackLength) != "undefined") {
+            this.setState({
+                trackLength: trackData.trackLength
+            })
+        }
+
     }
 
     render() {
-        const { classes, setPlayTimelineState, toggleMuteArray, getTrackLength, getArmArrayIndex, toggleArmArray } = this.props;
-        let armValue = false;
+        const { classes, setPlayTimelineState, toggleMuteArray } = this.props;
 
         return (
             <div className={classes.root}>
