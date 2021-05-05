@@ -1,11 +1,33 @@
 {
   "dependencies": {
+    "@material-ui/core": "^4.11.4",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.58",
     "cors": "^2.8.5",
     "croppie": "^2.6.5",
     "firebase": "^8.4.3",
+    "firebase-admin": "^9.7.0",
+    "firebase-functions": "^3.13.2",
     "lamejs": "^1.2.0",
-    "material-ui": "^0.20.2",
     "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "^4.0.3",
+    "reactfire": "^3.0.0-rc.0",
     "sweetalert2": "^10.16.7"
+  },
+  "scripts": {
+    "build": "react-scripts build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
