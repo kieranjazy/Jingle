@@ -1,6 +1,5 @@
 const firebase = require("firebase");
 import firebaseConfig from "./config.js"
-firebase.initializeApp(firebaseConfig);
 /*
 	Composer Server Wrapper
 	Version 1
@@ -9,6 +8,7 @@ firebase.initializeApp(firebaseConfig);
 
 function ComposerServerWrapper() {
 	console.log("Object Created I guess");
+	firebase.initializeApp(firebaseConfig);
 }
 
 ComposerServerWrapper.prototype.fetchJSON = function(url, callback) {
@@ -58,7 +58,7 @@ ComposerServerWrapper.prototype.saveFile = function(savefilename, data) {
 	const currentUser = firebase.auth().currentUser;
 	const storageRef = firebase.storage().ref(currentUser.uid + "/saves/" + savefilename + ".json");
 	storageRef.put(data);
-	const saveLink = firebase.functions().httpsCallable('saveFile');
+	const saveLink = firebase.functions().httpsCallable('addFile');
 	saveLink({filename:savefilename})
 }
 
