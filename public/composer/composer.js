@@ -2,9 +2,9 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioctx = new AudioContext();
 /*
  * Composer
- * Version 2.2 (work in progress though!)
+ * Version 2.3 (work in progress though!)
  * Created by Daniel Hannon (danielh2942)
- * Last Edited 4/05/2021
+ * Last Edited 5/05/2021
  *
  * Abstract: Like the previous one but it was built in conjunction
  * with a UI so hopefully it works this time :)
@@ -589,11 +589,15 @@ Composer.prototype.setTrackInstrument = function(trackNo, instrumentData) {
 	this.fetchInstrument(instrumentData);
 }
 
-Composer.prototype.fetchInstrument = function(instrument) {
-	for(let i = 0; i < this.loadedInstruments.length; i++) {
-		if(this.loadedInstruments[i].isLoaded == false) {
-			//TODO Make serverside fetch
-		}
+Composer.prototype.fetchInstrument = function(trackNo,instrument) {
+	let temp = JSON.parse(instrument);
+	if(typeof(temp.audiodata) == "undefined") {
+		console.log("Could not add instrument!");
+	}
+	if(this.instrumentBank.length == trackNo) {
+		this.instrumentBank.push(temp.audiodata.slice());
+	} else if(trackNo < this.instrumentBank.length && trackNo >= 0)
+		this.instrumentBank[trackNo] = temp.audiodata.slice();
 	}
 };
 
