@@ -9,6 +9,10 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button'
 import Select from '@material-ui/core/Select';
 import Checkbox from '@material-ui/core/Checkbox';
+import ButtonGroup from '@material-ui/core/ButtonGroup'
+import TextField from '@material-ui/core/TextField'
+import Grid from '@material-ui/core/Grid'
+
 
 
 function TabPanel(props) {
@@ -60,12 +64,10 @@ class WidgetBar extends React.Component {
             value: 0,
             arpeggiatorActive: false,
             arpeggiatorValue: 0.03125,
+            filename: "example"
         };
 
     }
-
-
-    //We want the Track tab to have track length, instrument select, ...
 
     handleTabChange = (event, newValue) => {
         this.setState({
@@ -160,11 +162,11 @@ class WidgetBar extends React.Component {
                 </TabPanel>
 
                 <TabPanel value={this.state.value} index={1}>
-                    Arpeggiator Toggle: <t/>
+                    Arpeggiator Toggle: <t />
                     <Checkbox onChange={this.handleArpeggiatorToggle}></Checkbox>
-                    <br/>
+                    <br />
 
-                    Arpeggiator Speed: <t/>
+                    Arpeggiator Speed: <t />
                     <select id="arpSpeeds" onChange={this.handleArpeggiatorChange}>
                         <option value="0.03125">1/1</option>
                         <option value="0.06250">1/2</option>
@@ -181,11 +183,21 @@ class WidgetBar extends React.Component {
                 </TabPanel>
 
                 <TabPanel value={this.state.value} index={3}>
-                    <Button onClick={renderMP3Callback}>Render MP3</Button>
-                    <Button onClick={composerSaveDataCallback}>Save composer to JSON</Button>
-                    <Button onClick={composerLoadDataCallback}>Load composer from JSON</Button>
-                </TabPanel>
+                    <Grid container spacing={2} direction="column">
+                        <Grid item>
+                            <ButtonGroup variant='contained' orientation='vertical'>
+                                <Button onClick={renderMP3Callback}>Render MP3</Button>
+                                <Button onClick={composerSaveDataCallback}>Save composer to JSON</Button>
+                                <Button onClick={composerLoadDataCallback}>Load composer from JSON</Button>
+                            </ButtonGroup>
+                        </Grid>
 
+                        <Grid item>
+                            <TextField label="Jingle Name" onChange={(e) => { this.setState({ filename: e.target.value }); }} />
+                            <Button style={{marginLeft: '17px', marginTop: '10px'}}>Publish your Jingle</Button>
+                        </Grid>
+                    </Grid>
+                </TabPanel>
             </div>
         );
     }

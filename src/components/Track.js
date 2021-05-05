@@ -324,9 +324,8 @@ class Track extends React.Component {
 
                 <div className={classes.options}>
                     <div className={classes.toggles}>
-                        <FormGroup row style={{height: 50}}>
-                            <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" onChange={(e) => { toggleMuteArray(); }} />
-                            <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false} />
+                        <FormGroup row style={{height: 50,}}>
+                            <FormControlLabel style={{marginBottom: '40px'}} control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" onChange={(e) => { toggleMuteArray(); }} />
                         </FormGroup>
 
                         <FormGroup column>

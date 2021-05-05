@@ -60,7 +60,6 @@ class TrackManager extends React.Component {
             bpm: 120,
             channels: 2,
             muteArray: [false, false, false, false],
-            soloArray: [0, 0, 0, 0],
             armArray: [1, 0, 0, 0],
             playTimelineState: 'stop',
             octave: 4,
@@ -167,10 +166,6 @@ class TrackManager extends React.Component {
 
         console.log("muteArray[" + trackNo + "] was toggled. Is now " + this.composer.getTrackMuteState(trackNo));
         console.log("Track 1 mute state: " + this.composer.getTrackMuteState(0) + " and Track 2 mute state: " + this.composer.getTrackMuteState(1))
-    }
-
-    toggleSoloArray = (trackNo) => {
-
     }
 
     getMuteArrayIndex = (trackNo) => {
