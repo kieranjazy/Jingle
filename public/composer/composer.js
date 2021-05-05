@@ -85,6 +85,24 @@ Composer.prototype.getMasterVolume = function() {
 	return this.masterVolume;
 };
 
+Composer.prototype.setTrackVolume = function(trackNo, newVolume) {
+	if(trackNo >= this.numTracks) {
+		console.log("Could not set track volume");
+		return 0;
+	} else {
+		newVolume*=1;
+		if(!isNaN(newVolume) && newVolume >= 0) {
+			this.instrumentVolumes[trackNo] = newVolume;
+			return 1;
+		}
+		return 0;
+	}
+}
+
+Composer.prototype.geTrackVolume = function(trackNo) {
+	return this.instrumentVolumes[trackNo];
+}
+
 Composer.prototype.panTrack = function(trackNo, val) {
 	if(trackNo < 0) {
 		console.log("Track Number must be positive");
