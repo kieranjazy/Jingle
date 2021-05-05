@@ -16,13 +16,14 @@ const useStyles = theme => ({
 
 });
 
+const parentTrackDivWidth = 1050;
+
 class VisualNote extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            isExpanding: true,
-            width: 1,
-            height: 8.75,
+            isExpanding: this.props.isExpandingByDefault,
+            width: this.props.width,
         };
 
         this.expand = this.expand.bind(this);
@@ -32,9 +33,10 @@ class VisualNote extends React.Component {
     }
 
     componentDidMount = () => {
-        console.log(this.divRef.current.style);
+        //console.log(this.divRef.current.style);
         this.divRef.current.style.left = String(this.props.xValue) + 'px';
         this.divRef.current.style.top = String(this.props.yValue) + 'px';
+        this.divRef.current.style.width = String(this.props.width) + 'px';
         this.requestID = setInterval(this.expand, 10);
     }
 
@@ -42,9 +44,11 @@ class VisualNote extends React.Component {
         if (this.state.isExpanding) {
             if (this.divRef.current) {
                 this.divRef.current.style.width = String(this.state.width) + 'px';
+
                 this.setState({
-                    width: (this.state.width + 1),
-                });
+                    width: (this.getTimelinePosition() - parseInt(this.divRef.current.style.left))
+                })
+
             } else {
                 this.toggleIsExpanding();
             }
@@ -55,12 +59,17 @@ class VisualNote extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (this.props.yValue != prevProps.yValue) {
-            this.divRef.current.style.top = String(this.props.xValue) + 'px';
+            this.divRef.current.style.top = String(this.props.yValue) + 'px';
         }
 
         if (this.props.height != prevProps.height) {
+            console.log("height change")
             this.divRef.current.style.height = String(this.props.height) + 'px';
         }
+    }
+
+    getTimelinePosition() {
+        return ((performance.now() - this.props.trackStartTimestamp()) / this.props.trackLength()) * parentTrackDivWidth;        
     }
 
     toggleIsExpanding() {
@@ -87,10 +96,13 @@ class VisualNote extends React.Component {
         });
     }
 
-    setHeight(newValue) {
-        this.setState({
-            height: newValue,
-        });
+    saveVisualNoteAsJSON() {
+        return {
+            width: this.state.width,
+            height: this.props.height,
+            yValue: this.props.yValue,
+            xValue: this.props.xValue
+        };
     }
 
     render() {

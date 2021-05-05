@@ -92,9 +92,6 @@ const useStyles = theme => ({
     redBarAnimation: {
         animation: "$moveLine 10000ms linear",
     },
-    '.ToggleButton:selected': {
-        backgroundColor: 'black'
-    }
 });
 
 class Track extends React.Component {
@@ -108,6 +105,7 @@ class Track extends React.Component {
             timeStart: null,
             visualNotes: [],
             armed: this.props.getArmArrayIndex(),
+            visualNoteHeight: 8.75,
         };
 
         this.volumeChange = this.volumeChange.bind(this);
@@ -119,14 +117,19 @@ class Track extends React.Component {
         this.redBarRef = React.createRef();
         this.noteRef = React.createRef();
 
-        this.activeOctaves = [];
+        this.activeOctaves = [4]; //4 is our base octave so it'll always be in here even if no notes are present
         this.currentVisualNoteRefs = [];
         this.activeNotes = [null, null, null, null, null, null, null, null, null, null]; //10 possible active notes
+        this.visualNotesData = []; //This will be used to store the 4 values needed to load a visualNote from memory, has to be separate since...
+        //These values are only obtainable the moment before the visualNote ref is cleared, as the VisualNotes in visualNotes are not accessible to us...
+        //Without having a ref to it, and we can only have 10 at a time
 
         let i = 0;
         for (; i != 10; i++) {
             this.currentVisualNoteRefs[i] = React.createRef();
         }
+
+        this.trackSaveData = null;
     }
 
     volumeChange = (event, newValue) => {
@@ -135,7 +138,9 @@ class Track extends React.Component {
         });
     }
 
-    panChange = (event, newValue) => {
+    panChange = (newValue) => {
+        this.props.changePan(newValue);
+
         this.setState({
             pan: newValue
         })
@@ -147,14 +152,18 @@ class Track extends React.Component {
         });
     }
 
-    addVisualNote = (index, xValue, yValue, height) => {
-        this.setState({
-            visualNotes: [...this.state.visualNotes, <VisualNote xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]} height={height}/>],
-        })
+    getStartTime = () => {
+        return this.state.timeStart;
+    }
 
-        if (this.activeOctaves.indexOf(this.state.composerOctave) != -1) {
-            this.activeOctaves = [...this.state.activeOctaves, this.state.composerOctave];
-        }
+    getTrackLength = () => {
+        return this.state.trackLength;
+    }
+
+    addVisualNote = (index, xValue, yValue) => {
+        this.setState({
+            visualNotes: [...this.state.visualNotes, <VisualNote isExpandingByDefault={true} width={1} xValue={xValue} yValue={yValue} ref={this.currentVisualNoteRefs[index]} height={this.state.visualNoteHeight} trackStartTimestamp={this.getStartTime} trackLength={this.getTrackLength}/>],
+        })
     }
 
     clearTrack = () => {
@@ -165,10 +174,10 @@ class Track extends React.Component {
             volume: 100,
             timelineAnimation: 'stop',
             visualNotes: [],
-            activeOctaves: [],
         });
 
         this.redBarRef.current.style.animationPlayState = 'initial';
+        this.activeOctaves = [4];
 
         let i = 0;
         for (; i != 10; i++) {
@@ -176,10 +185,20 @@ class Track extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps) { //All this code was just a nightmare, comments would do more harm than good at this point
+        if ((this.props.isSavingToJSON != prevProps.isSavingToJSON) && this.props.isSavingToJSON == true) {
+            this.saveTrackToJSON();
+        }
+        
+        if ((this.props.isLoadingFromJSON != prevProps.isLoadingFromJSON) && this.props.isLoadingFromJSON == true) {
+            this.loadTrackFromJSON();
+            console.log(this.state)
+        }
+
         if (this.props.playTimelineState != prevProps.playTimelineState) {
             if (this.props.playTimelineState === 'pause') {
                 this.redBarRef.current.style.animationPlayState = 'paused';
+                //console.log(this.state.visualNotes);
             } else if (this.props.playTimelineState === 'play' || this.props.playTimelineState === 'record') {
                 this.redBarRef.current.style.animationDuration = this.props.getTrackLength() + 'ms';
                 this.trackLengthChange(this.props.getTrackLength());
@@ -197,19 +216,30 @@ class Track extends React.Component {
 
         if (this.props.keyPressEvent != prevProps.keyPressEvent && toneKeys.indexOf(this.props.keyPressEvent[0]) != -1 && this.state.armed) {
             if (this.props.keyPressEvent[1] == 'down' && this.activeNotes.indexOf(this.props.keyPressEvent[0]) == -1) {
+                if (this.activeOctaves.indexOf(this.props.composerOctave) == -1) {
+                    this.activeOctaves = [...this.activeOctaves, this.props.composerOctave]
+                }
+
                 this.addVisualNote(
                     this.findFirstNonNullIndex(this.activeNotes),
                     (((performance.now() - this.state.timeStart) / this.state.trackLength) * 1050) + 7,
                     (toneKeys.length - (toneKeys.indexOf(this.props.keyPressEvent[0]) + 1)) * (140 / toneKeys.length)
                 );
+
                 this.activeNotes[this.findFirstNonNullIndex(this.activeNotes)] = this.props.keyPressEvent[0];
             } else if (this.props.keyPressEvent[1] == 'up') {
                 if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])]) {
                     if (this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current) {
                         this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current.setIsExpanding(false);
+
+                        this.visualNotesData.push(this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])].current.saveVisualNoteAsJSON());
+
                         this.currentVisualNoteRefs[this.activeNotes.indexOf(this.props.keyPressEvent[0])] = React.createRef();
                     } else if (this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])].current) {
                         this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])].current.setIsExpanding(false);
+
+                        this.visualNotesData.push(this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])].current.saveVisualNoteAsJSON());
+
                         this.currentVisualNoteRefs[this.activeNotes.indexOf(prevProps.keyPressEvent[0])] = React.createRef();
                     }
                 }
@@ -237,6 +267,41 @@ class Track extends React.Component {
         return 0;
     }
 
+    saveTrackToJSON() {
+        let trackSaveFile = {
+            visualNotes: this.visualNotesData,
+            pan: this.state.pan,
+            volume: this.state.volume, 
+            trackLength: this.state.trackLength,
+            armed: this.state.armed,
+            visualNoteHeight: this.state.visualNoteHeight, //This value is determined by the range of octaves in use
+        }
+
+        //console.log(JSON.stringify(trackSaveFile));
+        this.trackSaveData = JSON.stringify(trackSaveFile);
+    }
+
+    loadTrackFromJSON = () => {
+        if (this.trackSaveData.length == 0) {
+            console.log('Failed to load data for this track');
+        }
+
+        let trackData = JSON.parse(this.trackSaveData);
+
+        if (typeof(trackData.visualNotes) != "undefined") {
+            let i = 0;
+            let temp = [];
+            for (; i != trackData.visualNotes.length; i++) {
+                temp.push(<VisualNote isExpandingByDefault={false} width={trackData.visualNotes[i].width} height={trackData.visualNotes[i].height} xValue={trackData.visualNotes[i].xValue} yValue={trackData.visualNotes[i].yValue}/>);
+            }
+
+            this.setState({
+                visualNotes: temp
+            })
+        }
+
+    }
+
     render() {
         const { classes, setPlayTimelineState, toggleMuteArray, getTrackLength, getArmArrayIndex, toggleArmArray } = this.props;
         let armValue = false;
@@ -259,7 +324,7 @@ class Track extends React.Component {
 
                 <div className={classes.options}>
                     <div className={classes.toggles}>
-                        <FormGroup row>
+                        <FormGroup row style={{height: 50}}>
                             <FormControlLabel control={<Checkbox name="muteCheckbox" size="small" />} label="Mute" onChange={(e) => { toggleMuteArray(); }} />
                             <FormControlLabel control={<Checkbox name="soloCheckbox" size="small" />} label="Solo" checked={false} />
                         </FormGroup>
@@ -295,7 +360,7 @@ class Track extends React.Component {
                             </Grid>
 
                             <Grid item xs={8}>
-                                <Slider onChange={this.panChange} defaultValue={0.5} min={0} max={1} step={0.05} style={{ width: 85 }}>
+                                <Slider onChange={(e, value) => {this.panChange(1 - value);}} defaultValue={0.5} min={0} max={1} step={0.05} style={{ width: 85 }}>
 
                                 </Slider>
                             </Grid>
