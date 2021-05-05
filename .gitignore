@@ -70,6 +70,9 @@ node_modules/
 /public/composer/wavetables/*
 #not including proprietary samples
 /public/composer/tests/dsamples/*
+/build/
+/public/composer/tools/input/
+/public/composer/tools/output/
 *.wav
 
 config.js
