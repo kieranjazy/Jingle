@@ -1,0 +1,10 @@
+{
+	"instruments":[
+		{"name":"synth_lead","isLoaded":false,"type":0},
+		{"name":"enya","isLoaded":false,"type":0},
+		{"name":"wobbly","isLoaded":false,"type":0},
+		{"name":"choiraah","isLoaded":false,"type":0},
+		{"name":"TR_909","isLoaded":false,"type":1},
+		{"name":"TR_808","isLoaded":false, "type":1}
+	]
+}

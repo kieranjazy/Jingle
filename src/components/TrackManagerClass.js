@@ -16,6 +16,7 @@ import StopIcon from '@material-ui/icons/Stop';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import ComposerServerWrapper from './ComposerServerWrapper'
 
 const useStyles = theme => ({
     root: {
@@ -53,7 +54,7 @@ class TrackManager extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            masterVolume: 1,
+            masterVolume: 0.5,
             bpm: 120,
             channels: 2,
             muteArray: [false, false, false, false],
@@ -75,12 +76,6 @@ class TrackManager extends React.Component {
 
         this.composerSaveData = null;
         this.trackManagerSaveData = null;
-
-        this.instrumentList = {
-            instruments: [
-
-            ]
-        }
     }
 
     getTrackLength = () => {
@@ -108,7 +103,7 @@ class TrackManager extends React.Component {
             this.setState({ playTimelineState: newState });
 
             if (newState == 'play') {
-                console.log("Track 1 mute state: " + this.composer.getTrackMuteState(0) + " and Track 2 mute state: " + this.composer.getTrackMuteState(1))
+                //console.log("Track 1 mute state: " + this.composer.getTrackMuteState(0) + " and Track 2 mute state: " + this.composer.getTrackMuteState(1))
                 this.composer.play();
             } else if (newState == 'pause') {
                 this.composer.pause();
@@ -133,6 +128,7 @@ class TrackManager extends React.Component {
     setBPM = (newState) => {
         this.composer.setBpm(newState);
         this.setState({ bpm: newState });
+        //console.log(this.composerServerWrapper.getManifest());
 
         // console.log(this.composer.getBpm());
     }
@@ -238,6 +234,7 @@ class TrackManager extends React.Component {
     }
 
     renderMP3 = () => {
+        //console.log(this.serverWrapper.getManifest());
         this.composer.renderMp3("main.mp3");
     }
 
@@ -328,7 +325,7 @@ class TrackManager extends React.Component {
                             <VolumeDown style={{ position: 'relative', top: '10px' }} />
                         </Grid>
                         <Grid item>
-                            <Slider onChange={this.setMasterVolume} className={classes.masterVolumeSlider} defaultValue={1} min={0} max={2} step={0.01}>
+                            <Slider onChange={this.setMasterVolume} className={classes.masterVolumeSlider} defaultValue={0.5} min={0} max={2} step={0.01}>
 
                             </Slider>
                         </Grid>
@@ -373,8 +370,9 @@ class TrackManager extends React.Component {
                     this.composer.setArpeggioState(0, !this.composer.getArpeggioState(0));
                 }} arpeggiatorChangeCallback={(newSpeed) => {
                     this.composer.setArpeggioSpeed(0, newSpeed * 1);
+                }} setTrackInstrumentCallback={(trackNo, index) => {
+                    this.composer.setTrackInstrument(trackNo, this.composer.storedInstruments[index - 1]);
                 }}
-
                 />
             </div>
         );

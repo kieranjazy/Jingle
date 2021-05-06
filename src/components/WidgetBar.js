@@ -12,8 +12,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ButtonGroup from '@material-ui/core/ButtonGroup'
 import TextField from '@material-ui/core/TextField'
 import Grid from '@material-ui/core/Grid'
-
-
+import * as manifest from '../manifest.json'
 
 function TabPanel(props) {
     const { children, value, index } = props;
@@ -66,7 +65,6 @@ class WidgetBar extends React.Component {
             arpeggiatorValue: 0.03125,
             filename: "example"
         };
-
     }
 
     handleTabChange = (event, newValue) => {
@@ -91,7 +89,6 @@ class WidgetBar extends React.Component {
         })
     }
 
-
     render() {
         const { classes, renderMP3Callback, composerSaveDataCallback, composerLoadDataCallback } = this.props;
 
@@ -111,52 +108,14 @@ class WidgetBar extends React.Component {
                 </AppBar>
 
                 <TabPanel value={this.state.value} index={0}>
-                    Track 1 Instrument:
-                    <Select native defaultValue="wobbly" className={classes.selectStyle}>
+                    Track Instruments:
+                    <Select native className={classes.selectStyle} onChange={(e) => {this.props.setTrackInstrumentCallback(0, e.target.value)}}>
                         <option value="" />
-                        <optgroup label="Synths">
-                            <option value={1}>Wobbly</option>
-                            <option value={2}>Something else</option>
-                        </optgroup>
-                        <optgroup label="Drum Kits">
-                            <option value={3}>Drum Kit 1</option>
-                            <option value={4}>Drum Kit 2</option>
-                        </optgroup>
-                    </Select><br />
-                    Track 2 Instrument:
-                    <Select native defaultValue="wobbly" className={classes.selectStyle}>
-                        <option value="" />
-                        <optgroup label="Synths">
-                            <option value={1}>Wobbly</option>
-                            <option value={2}>Something else</option>
-                        </optgroup>
-                        <optgroup label="Drum Kits">
-                            <option value={3}>Drum Kit 1</option>
-                            <option value={4}>Drum Kit 2</option>
-                        </optgroup>
-                    </Select><br />
-                    Track 3 Instrument:
-                    <Select native defaultValue="wobbly" className={classes.selectStyle}>
-                        <option value="" />
-                        <optgroup label="Synths">
-                            <option value={1}>Wobbly</option>
-                            <option value={2}>Something else</option>
-                        </optgroup>
-                        <optgroup label="Drum Kits">
-                            <option value={3}>Drum Kit 1</option>
-                            <option value={4}>Drum Kit 2</option>
-                        </optgroup>
-                    </Select><br />
-                    Track 4 Instrument:
-                    <Select native defaultValue="wobbly" className={classes.selectStyle}>
-                        <option value="" />
-                        <optgroup label="Synths">
-                            <option value={1}>Wobbly</option>
-                            <option value={2}>Something else</option>
-                        </optgroup>
-                        <optgroup label="Drum Kits">
-                            <option value={3}>Drum Kit 1</option>
-                            <option value={4}>Drum Kit 2</option>
+                        <optgroup label="Wavetables">
+                            <option value={1}>Synth Lead</option>
+                            <option value={2}>Enya Lead</option>
+                            <option value={3}>Wobbly Lead</option>
+                            <option value={4}>Choir Aah</option>
                         </optgroup>
                     </Select><br />
                 </TabPanel>
@@ -194,7 +153,7 @@ class WidgetBar extends React.Component {
 
                         <Grid item>
                             <TextField label="Jingle Name" onChange={(e) => { this.setState({ filename: e.target.value }); }} />
-                            <Button style={{marginLeft: '17px', marginTop: '10px'}}>Publish your Jingle</Button>
+                            <Button style={{ marginLeft: '17px', marginTop: '10px' }} >Publish your Jingle</Button>
                         </Grid>
                     </Grid>
                 </TabPanel>
