@@ -16,7 +16,7 @@ import StopIcon from '@material-ui/icons/Stop';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import ComposerServerWrapper from './ComposerServerWrapper'
+import Typography from '@material-ui/core/Typography'
 
 const useStyles = theme => ({
     root: {
@@ -334,6 +334,10 @@ class TrackManager extends React.Component {
                         </Grid>
                     </Grid>
 
+                    <Typography>
+                        Octave: {this.state.octave}
+                    </Typography>
+
                     <ToggleButtonGroup style={{ marginRight: 15, backgroundColor: '#3f51b5' }} value={this.state.channels} exclusive onChange={this.setChannels}>
                         <ToggleButton style={{ color: 'white' }} value={1}>
                             Mono
@@ -371,7 +375,7 @@ class TrackManager extends React.Component {
                 }} arpeggiatorChangeCallback={(newSpeed) => {
                     this.composer.setArpeggioSpeed(0, newSpeed * 1);
                 }} setTrackInstrumentCallback={(trackNo, index) => {
-                    this.composer.setTrackInstrument(trackNo, this.composer.storedInstruments[index - 1]);
+                    this.composer.setTrackInstrument(trackNo, index - 1);
                 }}
                 />
             </div>

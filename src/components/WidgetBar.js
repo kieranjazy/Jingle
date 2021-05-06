@@ -116,6 +116,8 @@ class WidgetBar extends React.Component {
                             <option value={2}>Enya Lead</option>
                             <option value={3}>Wobbly Lead</option>
                             <option value={4}>Choir Aah</option>
+                            <option value={5}>TR909</option>
+                            <option value={6}>TR808</option>
                         </optgroup>
                     </Select><br />
                 </TabPanel>
@@ -149,11 +151,6 @@ class WidgetBar extends React.Component {
                                 <Button onClick={composerSaveDataCallback}>Save composer to JSON</Button>
                                 <Button onClick={composerLoadDataCallback}>Load composer from JSON</Button>
                             </ButtonGroup>
-                        </Grid>
-
-                        <Grid item>
-                            <TextField label="Jingle Name" onChange={(e) => { this.setState({ filename: e.target.value }); }} />
-                            <Button style={{ marginLeft: '17px', marginTop: '10px' }} >Publish your Jingle</Button>
                         </Grid>
                     </Grid>
                 </TabPanel>
