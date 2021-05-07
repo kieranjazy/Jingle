@@ -6,3 +6,5 @@ index.js file goes in functions folder
 node modules not included aswell as other javascript files that come along when you start the firebase project
 
 
+Currently hosted at:
+https://jingle-nuigalway.web.app/
